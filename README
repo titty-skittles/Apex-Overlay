@@ -1,0 +1,12 @@
+# Apex Overlay
+
+A web-based broadcast overlay system for live sports.
+
+## Pages
+- `program.html` – OBS browser source output
+- `control.html` – operator control panel
+
+## Development
+```bash
+npm install
+npm run dev
