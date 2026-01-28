@@ -1,50 +1,5 @@
 import { getSavedWsUrl, saveWsUrl } from "../shared/config.js";
 
-const app = document.getElementById("app");
-
-app.innerHTML = `
-<div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 20px; max-width: 900px;">
-<h1 style="margin: 0 0 12px;">Apex Overlay — Control</h1>
-
-<section style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-<h2 style="margin: 0 0 10px; font-size: 18px;">Connection Settings</h2>
-
-<label style="display:block; font-size: 14px; margin-bottom: 6px;">
-Scoreboard WebSocket URL
-</label>
-
-<div style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-<input id="wsUrl" type="text" placeholder="ws://127.0.0.1:8000/WS/"
-style="flex: 1; min-width: 320px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;" />
-
-<button id="saveBtn"
-style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
-Save
-</button>
-
-<button id="openProgramBtn"
-style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
-Open Program
-</button>
-
-<button id="copyProgramBtn"
-style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
-Copy Program URL
-</button>
-</div>
-
-<p id="status" style="margin: 10px 0 0; font-size: 13px;"></p>
-</section>
-
-<section style="border: 1px solid #eee; border-radius: 12px; padding: 16px;">
-<h2 style="margin: 0 0 10px; font-size: 18px;">Next</h2>
-<div style="color:#444; font-size:14px;">
-We’ll add buttons here to Take/Clear lower thirds, stat overlays, etc.
-</div>
-</section>
-</div>
-`;
-
 const wsInput = document.getElementById("wsUrl");
 const statusEl = document.getElementById("status");
 const saveBtn = document.getElementById("saveBtn");
@@ -96,3 +51,173 @@ copyProgramBtn.addEventListener("click", async () => {
     setStatus(e.message || String(e), false);
   }
 });
+
+// --- Connection health probe (control page) ---
+const connPill = document.getElementById("connPill");
+const connDot = document.getElementById("connDot");
+const connText = document.getElementById("connText");
+const connMeta = document.getElementById("connMeta");
+const testConnBtn = document.getElementById("testConnBtn");
+
+let probe = {
+  ws: null,
+  url: "",
+  lastOpenAt: 0,
+  lastMsgAt: 0,
+  lastErr: "",
+  tickTimer: null,
+  staleAfterMs: 8000,   // no messages for 8s => stale
+  reconnectMs: 1500,
+  reconnectTimer: null,
+};
+
+function setConnUI(state, meta = "") {
+  // state: "idle" | "connecting" | "open" | "receiving" | "stale" | "error" | "closed"
+  const map = {
+    idle:       { dot: "#999",  text: "Not connected", border: "#ddd" },
+    connecting: { dot: "#f59e0b", text: "Connecting…",  border: "#f3c77a" },
+    open:       { dot: "#0ea5e9", text: "Connected (no data yet)", border: "#86d4f5" },
+    receiving:  { dot: "#16a34a", text: "Connected + receiving", border: "#86efac" },
+    stale:      { dot: "#f97316", text: "Stale (no recent data)", border: "#fdba74" },
+    error:      { dot: "#b42318", text: "Error", border: "#f2b8b5" },
+    closed:     { dot: "#999",  text: "Disconnected", border: "#ddd" },
+  };
+
+  const s = map[state] || map.idle;
+  connDot.style.background = s.dot;
+  connPill.style.borderColor = s.border;
+  connText.textContent = s.text;
+  connMeta.textContent = meta;
+}
+
+function clearProbeTimers() {
+  if (probe.tickTimer) clearInterval(probe.tickTimer);
+  if (probe.reconnectTimer) clearTimeout(probe.reconnectTimer);
+  probe.tickTimer = null;
+  probe.reconnectTimer = null;
+}
+
+function stopProbe() {
+  clearProbeTimers();
+  if (probe.ws) {
+    try { probe.ws.close(); } catch {}
+  }
+  probe.ws = null;
+  probe.lastOpenAt = 0;
+  probe.lastMsgAt = 0;
+  probe.lastErr = "";
+  setConnUI("idle", "");
+}
+
+function startProbe(url) {
+  // Reset existing
+  stopProbe();
+  probe.url = url;
+
+  setConnUI("connecting", url);
+
+  let ws;
+  try {
+    ws = new WebSocket(url);
+  } catch (e) {
+    setConnUI("error", String(e));
+    return;
+  }
+  probe.ws = ws;
+
+  ws.addEventListener("open", () => {
+    probe.lastOpenAt = Date.now();
+    probe.lastMsgAt = 0;
+    setConnUI("open", `Open • ${url}`);
+
+    // Optional: If your server supports it, send a ping
+    // ws.send(JSON.stringify({ type: "ping", t: Date.now() }));
+
+    probe.tickTimer = setInterval(() => {
+      const now = Date.now();
+
+      // If we've never received a message, show how long since open
+      if (!probe.lastMsgAt) {
+        const secs = Math.floor((now - probe.lastOpenAt) / 1000);
+        // after a while with no messages, call it stale
+        if (now - probe.lastOpenAt > probe.staleAfterMs) {
+          setConnUI("stale", `Open, no messages for ${secs}s • ${url}`);
+        } else {
+          setConnUI("open", `Open, waiting for data (${secs}s) • ${url}`);
+        }
+        return;
+      }
+
+      // We have received messages; check freshness
+      const ageMs = now - probe.lastMsgAt;
+      const ageS = Math.floor(ageMs / 1000);
+      if (ageMs > probe.staleAfterMs) {
+        setConnUI("stale", `Last message ${ageS}s ago • ${url}`);
+      } else {
+        setConnUI("receiving", `Last message ${ageS}s ago • ${url}`);
+      }
+    }, 500);
+  });
+
+  ws.addEventListener("message", () => {
+    probe.lastMsgAt = Date.now();
+    // UI will flip to receiving on next tick, but do it immediately too
+    setConnUI("receiving", `Receiving • ${url}`);
+  });
+
+  ws.addEventListener("error", () => {
+    probe.lastErr = "WebSocket error";
+    setConnUI("error", `${probe.lastErr} • ${url}`);
+  });
+
+  ws.addEventListener("close", (ev) => {
+    clearProbeTimers();
+    probe.ws = null;
+    const reason = (ev.reason || "").trim();
+    const meta = `Closed (${ev.code})${reason ? ` • ${reason}` : ""} • ${url}`;
+    setConnUI("closed", meta);
+
+    // auto-reconnect (handy while you’re typing URLs / restarting server)
+    probe.reconnectTimer = setTimeout(() => {
+      // only reconnect if the input still matches what we were probing
+      if (wsInput.value.trim() === url) startProbe(url);
+    }, probe.reconnectMs);
+  });
+}
+
+// Run probe when user clicks "Test connection"
+testConnBtn.addEventListener("click", () => {
+  try {
+    const saved = saveWsUrl(wsInput.value); // validates + normalises if you do that
+    startProbe(saved);
+    setStatus("Testing connection…");
+  } catch (e) {
+    setStatus(e.message || String(e), false);
+  }
+});
+
+// Bonus: restart probe when the WS URL changes (debounced)
+let urlDebounce = null;
+wsInput.addEventListener("input", () => {
+  if (urlDebounce) clearTimeout(urlDebounce);
+  urlDebounce = setTimeout(() => {
+    const raw = wsInput.value.trim();
+    if (!raw) { stopProbe(); return; }
+    // Don't validate on every keystroke if you don't want—this tries anyway
+    try {
+      const saved = saveWsUrl(raw);
+      startProbe(saved);
+    } catch {
+      // show idle while URL is invalid mid-typing
+      stopProbe();
+      setConnUI("idle", "Enter a valid ws:// URL to test");
+    }
+  }, 400);
+});
+
+// Start probing the initial saved URL on load
+try {
+  startProbe(saveWsUrl(wsInput.value));
+} catch {
+  setConnUI("idle", "Enter a valid ws:// URL to test");
+}

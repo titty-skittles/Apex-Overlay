@@ -4,15 +4,40 @@ import { buildOverlayModel, formatClockMs } from "../shared/overlayModel.js";
 
 const store = createRawStateStore();
 
+
+
+
+const HIDE_CLOCK_TICKS = true;
+
+function shouldLogWsKey(key) {
+  if (!HIDE_CLOCK_TICKS) return true;
+
+  // Hide noisy clock tick fields
+  if (
+    key.includes("ScoreBoard.CurrentGame.Clock(") &&
+    (key.endsWith(".Time") || key.endsWith(".InvertedTime"))
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 const client = createScoreboardClient({
   paths: [
     "ScoreBoard.CurrentGame.Clock(Period)",
     "ScoreBoard.CurrentGame.Clock(Jam)",
+    "ScoreBoard.CurrentGame.Clock(Lineup)",
+    "ScoreBoard.CurrentGame.Clock(Timeout)",
+    "ScoreBoard.CurrentGame.Clock(Intermission)",
     "ScoreBoard.CurrentGame.Team(1)",
     "ScoreBoard.CurrentGame.Team(2)",
     "ScoreBoard.CurrentGame.State",
   ],
-  onUpdate: ({ key, value }) => store.set(key, value),
+  onUpdate: ({ key, value }) => {
+    if (shouldLogWsKey(key)) console.log("WS", key, value);
+    store.set(key, value);
+  },
 });
 
 client.start();
@@ -95,5 +120,14 @@ function scheduleRender() {
 // Re-render on any store update (throttled)
 store.subscribe(scheduleRender);
 
-// First paint
+console.log("[program] main.js loaded");
+// store.subscribe(() => console.log("[program] store updated"));
+// console.log(JSON.stringify(buildOverlayModel(store.get), null, 2));
+
+setTimeout(() => {
+  console.log("[program] initial model snapshot");
+  console.log(buildOverlayModel(store.get));
+}, 500);
+
+
 render();

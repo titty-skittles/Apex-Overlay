@@ -27,10 +27,10 @@ export function buildOverlayModel(rawGet) {
     teams: [1, 2].map((t) => ({
       idx: t,
       name: s(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Name`), `Team ${t}`),
-                              initials: s(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
-                              score: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Score`), 0),
-                              timeouts: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0),
-                              officialReviews: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0),
+      initials: s(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
+      score: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Score`), 0),
+      timeouts: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0),
+      officialReviews: n(rawGet(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0),
     })),
   };
 

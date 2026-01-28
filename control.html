@@ -6,7 +6,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 20px; max-width: 900px;">
+        <h1 style="margin: 0 0 12px;">Apex Overlay — Control</h1>
+
+        <section style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <h2 style="margin: 0 0 10px; font-size: 18px;">Connection Settings</h2>
+
+          <label style="display:block; font-size: 14px; margin-bottom: 6px;">
+            Scoreboard URL (http or ws)
+          </label>
+
+          <div style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <input id="wsUrl" type="text" placeholder="ws://127.0.0.1:8000/WS/"
+              style="flex: 1; min-width: 320px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 14px;" />
+
+            <button id="saveBtn"
+              style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
+              Save
+            </button>
+
+            <button id="openProgramBtn"
+              style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
+              Open Program
+            </button>
+
+            <button id="copyProgramBtn"
+              style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
+              Copy Program URL
+            </button>
+          </div>
+
+          <p id="status" style="margin: 10px 0 0; font-size: 13px;"></p>
+
+          <!-- Connection health widget target -->
+          <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+            <span id="connPill"
+              style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid #ddd; font-size:12px;">
+              <span id="connDot" style="width:10px; height:10px; border-radius:50%; background:#999;"></span>
+              <span id="connText">Not connected</span>
+            </span>
+
+            <button id="testConnBtn"
+              style="padding: 8px 10px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; font-size: 13px;">
+              Test connection
+            </button>
+
+            <span id="connMeta" style="font-size:12px; color:#555;"></span>
+          </div>
+        </section>
+
+      </div>
+    </div>
     <script type="module" src="/src/control/main.js"></script>
   </body>
 </html>
