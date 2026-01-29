@@ -221,3 +221,35 @@ try {
 } catch {
   setConnUI("idle", "Enter a valid ws:// URL to test");
 }
+
+function normalizeToWsUrl(input, wsPath = "/WS/") {
+  const raw = String(input || "").trim();
+  if (!raw) throw new Error("WebSocket URL cannot be empty.");
+
+  // If it already looks like ws(s)://, keep it but normalise path if missing
+  if (/^wss?:\/\//i.test(raw)) {
+    const u = new URL(raw);
+    if (!u.pathname || u.pathname === "/") u.pathname = wsPath;
+    return u.toString();
+  }
+
+  // If it's http(s)://, convert scheme to ws(s):// and force wsPath
+  if (/^https?:\/\//i.test(raw)) {
+    const u = new URL(raw);
+    u.protocol = (u.protocol === "https:") ? "wss:" : "ws:";
+    u.pathname = wsPath;
+    u.search = ""; // usually you don't want query params for the socket endpoint
+    u.hash = "";
+    return u.toString();
+  }
+
+  // If user pasted something like "localhost:8000" (no scheme)
+  // Treat it as http:// and then convert.
+  const withScheme = "http://" + raw.replace(/^\/+/, "");
+  const u = new URL(withScheme);
+  u.protocol = "ws:";
+  u.pathname = wsPath;
+  u.search = "";
+  u.hash = "";
+  return u.toString();
+}

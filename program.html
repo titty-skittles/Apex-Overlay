@@ -19,48 +19,57 @@
   <body>
     <div id="app">
       <body class="preload sbNoConnectionStatus" sbCss="background-color: $.BackgroundColor: ovlToBackground" sbOn="keyup: ovlHandleKey">
-        <div class="scoreblk" sbContext="ScoreBoard.CurrentGame">
+        <div class="scoreblk">
 
           <div class="timeblk">
 
             <div class="pinfoblk">
-              <period class="Clock ShowInJam ShowInSecondLineup ShowInLineup ShowInTimeout">
-                <div data-bind="Clock(Period).Number"></div>
-                <pup>
-                  <div class="Clock ShowInJam ShowInLineup ShowInTimeout ShowInSecondLineup"
-                    data-bind="period.number"></div>
-                </pup>
+              <period class="Clock">
+                <div>period number:</div>
+                <div class="Clock" data-bind="period.number"></div>
               </period>
               <ptme>
-                <div class="Time Clock"
-                  data-bind="period.time"></div>
-                <div class="Clock ShowInIntermission" sbContext="Clock(Intermission)"
-                  data-bind="Time, Direction: sbToLongTime"></div>
+                <div>main time and label</div>
+                <div class="Time Clock" data-bind="main.time"></div>
+                <div class="Clock Label" data-bind="main.label"></div>
               </ptme>
-              <div class="jamtme Clock ShowInJam ShowInLineup ShowInTimeout ShowInSecondLineup">
-                <div class="Clock" sbContext="Clock(Jam)" data-bind="jam.time"></div>
+              <div class="jamtme Clock"> <!--add data-show-when="secondary"-->
+                <div>secondary time and label</div>
+                <div class="" data-bind="secondary.label"></div>
+                <div class="" data-bind="secondary.time"></div>
               </div>
             </div>
             <div class="pstatusblk">
-              <div class="ShowInIntermission ShowInLineup ShowInTimeout ShowInNoClock ShowInJam"
+              <div>game status:</div>
+              <div class="Status" data-bind="status.label"></div>
+              
+<!--               <div class="ShowInIntermission ShowInLineup ShowInTimeout ShowInNoClock ShowInJam"
                 data-bind="Clock(Intermission).Number, Clock(*).Running, TimeoutOwner, OfficialReviews, ^Settings.Setting(ScoreBoard.Intermission.*), OfficialScore, ClockDuringFinalScore, Rule(Period.Number): ovlToClockType">
-              </div>
+              </div> -->
+              <div>JAM number:</div>
+
               <div class="Clock ShowInJam" sbContext="Clock(Jam)" data-bind="jam.number"></div>
+              
             </div>
           </div>
-
+          <div>" "</div>
+          <div>" "</div>
           <div class="Team teamblk">
 
             <div class="nameblk" sbCss="color: Color(overlay.fg) | background: Color(overlay.bg)" >
+              <div>team 1 Name</div>
               <div class="tspan" data-bind="t1.name.long"></div>
-              <div class="teamscr" data-bind="t1.score" sbCss="color: Color(overlay.tfg) | background: Color(overlay.tbg)">
-              </div>
+              <div>team 1 score</div>
+              <div class="teamscr" data-bind="t1.score" sbCss="color: Color(overlay.tfg) | background: Color(overlay.tbg)"></div>
               <div class="timeoutblk">
+                <div>team timeouts</div>
                 <div class="Dot Timeout1" sbClass="Used: Timeouts: <1"></div>
                 <div class="Dot Timeout2" sbClass="Used: Timeouts: <2"></div>
                 <div class="Dot Timeout3" sbClass="Used: Timeouts: <3"></div>
                 <div class="Dot OfficialReview1" sbClass="Retained: RetainedOfficialReview | Used: OfficialReviews: <1"></div>
-              </div>          <div class="jammerscr">+<div data-bind="JamScore"></div></div>
+              </div>
+              <div>jam score</div>
+              <div class="jammerscr">+<div data-bind="t1.jamScore"></div></div>
 
             </div>
 
@@ -68,27 +77,35 @@
 
               <div class="flexbetween">
                 <div class="Clock JammerBox ShowInJam">
+                  <div>jammer name</div>
+                  <div data-bind="t1.jamming.number"></div>
+                  <div data-bind="t1.jamming.name"></div>
                   <div sbForeach="Position: Jammer, Pivot: only" class="sbFixed jammernme"
                     sbclass="Jamming: ^StarPass: ovlIsJamming | InBox: PenaltyBox | Penalized: CurrentPenalties: !== '' | HasClock: PenaltyTime: sbIsNotEmpty">
-                    <div sbdisplay=" Number"></div>
-                    <div sbdisplay=" Name"></div> <!--this doesn't work correctly and isn't formatted for it yet-->
+                    <!-- <div sbdisplay=" Number"></div> --> <!--this doesn't work correctly and isn't formatted for it yet-->
+                    <div sbdisplay=" Name"></div> 
                   </div>
                 </div>
-                <div class="jammerscr">+<div data-bind="JamScore"></div></div>
+
               </div>
+              <div>Jam Status:</div>
+              <div data-bind="t1.jam.status"></div>
               <div class="jammerspecial" sbCss="color: Color(overlay.fg) | background: Color(overlay.bg)" data-bind="StarPass, Lead, Lost: ovlToIndicator">
               </div>
 
             </div>
           </div>
-
+          <div>" "</div>
+          <div>" "</div>
           <div class="Team teamblk">
 
             <div class="nameblk" sbCss="color: Color(overlay.fg) | background: Color(overlay.bg)" >
-              <div class="tspan" data-bind="t2.name.ong"></div>
-              <div class="teamscr" data-bind="t2.score" sbCss="color: Color(overlay.tfg) | background: Color(overlay.tbg)">
-              </div>
+              <div>team 2 Name:</div>
+              <div class="tspan" data-bind="t2.name.long"></div>
+              <div>team 2 score:</div>
+              <div class="teamscr" data-bind="t2.score" sbCss="color: Color(overlay.tfg) | background: Color(overlay.tbg)"></div>
               <div class="timeoutblk">
+                <div>team timeouts:</div>
                 <div class="Dot Timeout1" sbClass="Used: Timeouts: <1"></div>
                 <div class="Dot Timeout2" sbClass="Used: Timeouts: <2"></div>
                 <div class="Dot Timeout3" sbClass="Used: Timeouts: <3"></div>
@@ -100,14 +117,19 @@
 
               <div class="flexbetween">
                 <div class="Clock JammerBox ShowInJam">
+                  <div>jammer name:</div>
+                  <div data-bind="t2.Jammer.number"></div>
+                  <div data-bind="t2.Jammer.name"></div>
                   <div sbForeach="Position: Jammer, Pivot: only" class="sbFixed jammernme"
                     sbclass="Jamming: ^StarPass: ovlIsJamming | InBox: PenaltyBox | Penalized: CurrentPenalties: !== '' | HasClock: PenaltyTime: sbIsNotEmpty">
-                    <div sbdisplay=" Number"></div>
-                    <div sbdisplay=" Name"></div> <!--this doesn't work correctly and isn't formatted for it yet-->
+                    <!-- <div sbdisplay=" Number"></div> --> <!--this doesn't work correctly and isn't formatted for it yet-->
+                    <div sbdisplay=" Name"></div> 
                   </div>
                 </div>
-                <div class="jammerscr">+<div data-bind="JamScore"></div></div>
+                <div>jam score:</div>
+                <div class="jammerscr">+<div data-bind="t2.jamScore"></div></div>
               </div>
+              <div>jam special:</div>
               <div class="jammerspecial" sbCss="color: Color(overlay.fg) | background: Color(overlay.bg)" data-bind="StarPass, Lead, Lost: ovlToIndicator">
               </div>
 
@@ -210,7 +232,7 @@
         <div class="lowerthird">
         </div>
 -->
-        
+
       </body>
 
     </div>
