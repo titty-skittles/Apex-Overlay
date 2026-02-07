@@ -4,9 +4,6 @@ import { buildOverlayModel, formatClockMs } from "../shared/overlayModel.js";
 
 const store = createRawStateStore();
 
-
-
-
 const HIDE_CLOCK_TICKS = true;
 
 function safeRender() {
@@ -136,8 +133,8 @@ function render() {
   const t1 = m?.teams?.[0] ?? {};
   const t2 = m?.teams?.[1] ?? {};
 
-  const t1Jammer = byPos(t1, "Jammer");
-  const t2Jammer = byPos(t2, "Jammer");
+  const t1Jamming = getJammingSkater(t1);
+  const t2Jamming = getJammingSkater(t2);
 
   applyTextBinds({
     // --- Period / Jam numbers
@@ -177,14 +174,9 @@ function render() {
     "t2.jamming.number": t2Jamming?.number ?? "",
   });
 
-
-
-
   // Later:
   // setShown("secondary", !!m.secondaryClock);
 }
-
-
 
 let scheduled = false;
 function scheduleRender() {

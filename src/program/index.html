@@ -5,6 +5,7 @@
 <head>
   <title>Stream Overlay | CRG ScoreBoard</title>
   <script type="module" src="./main.js"></script>
+  <script type="style" src="./program.css"></script>
   <!--<link href="/custom/overlay/Fonts/ApexTVfonts.css" type="text/css" rel="stylesheet">-->
 </head>
 
@@ -12,7 +13,41 @@
 <body class="preload sbNoConnectionStatus" sbCss="background-color: $.BackgroundColor: ovlToBackground"
   sbOn="keyup: ovlHandleKey">
 
-  <div class="scoreblk" sbContext="ScoreBoard.CurrentGame">
+  <div class="scoreblk">
+    <section class="cell clock clock-top">
+      <div class="period">
+        <span class="label">P</span>
+        <span class="value Clock" data-bind="period.number"></span>
+      </div>
+
+      <div class="mainclock">
+        <div class="Time Clock" data-bind="main.time"></div>
+        <div class="Clock Label" data-bind="main.label"></div>
+      </div>
+
+      <div class="subclock">
+        <div class="sub-label" data-bind="secondary.label"></div>
+        <div class="sub-time" data-bind="secondary.time"></div>
+      </div>
+    </section>
+
+    <section class="cell team team1 team-top">
+      <div class="teamhead" sbCss="color: Color(overlay.fg) | background: Color(overlay.bg)">
+        <div class="teamname tspan" data-bind="t1.name.long"></div>
+        <div class="teamscore teamscr" data-bind="t1.score" sbCss="color: Color(overlay.tfg) | background: Color(overlay.tbg)"></div>
+
+        <div class="timeouts">
+          <div class="Dot Timeout1" sbClass="Used: Timeouts: <1"></div>
+          <div class="Dot Timeout2" sbClass="Used: Timeouts: <2"></div>
+          <div class="Dot Timeout3" sbClass="Used: Timeouts: <3"></div>
+          <div class="Dot OfficialReview1" sbClass="Retained: RetainedOfficialReview | Used: OfficialReviews: <1"></div>
+        </div>
+      </div>
+
+      <div class="jamscore">
+        <span class="plus">+</span><span data-bind="t1.jamScore"></span>
+      </div>
+    </section>
 
     <div class="timeblk">
 

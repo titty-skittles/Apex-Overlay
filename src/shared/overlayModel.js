@@ -123,8 +123,13 @@ export function buildOverlayModel(get) {
   function computeStatusLabel(m) {
     const inIntermission = !!m.intermission?.running;
     const pregame = inIntermission && (Number(m.period?.number) === 0);
+    const unofficialScore = inIntermission && (Number(m.period?.number) === "");
+    const officialScore = inIntermission && false;
+
 
     if (pregame) return "Time to Derby";
+    if (unofficialScore) return "Unofficial Score";
+    if (officialScore) return "Final Score";
     if (inIntermission) return "Intermission";
 
     // Otherwise: use whatever your secondary clock represents
