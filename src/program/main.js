@@ -104,12 +104,32 @@ function setText(bindKey, value) {
   const legacy = document.getElementById(bindKey);
   if (legacy) legacy.textContent = next;
 }
-
 function applyTextBinds(binds) {
   for (const [key, value] of Object.entries(binds)) {
     setText(key, value ?? "");
   }
 }
+
+const lastClass = new Map();
+
+function setClass(bindKey, className) {
+  const next = String(className ?? "");
+
+  if (lastClass.get(bindKey) === next) return;
+  lastClass.set(bindKey, next);
+
+  const nodes = document.querySelectorAll(`[data-bind="${bindKey}"]`);
+  for (const el of nodes) el.className = next;
+
+  const legacy = document.getElementById(bindKey);
+  if (legacy) legacy.className = next;
+}
+function applyClassBinds(binds) {
+  for (const [key, value] of Object.entries(binds)) {
+    setClass(key, value ?? "");
+  }
+}
+
 
 function byPos(team, pos) {
   return team?.onTrack?.find(p => p.pos === pos) ?? null;
@@ -173,6 +193,20 @@ function render() {
     "t2.jamming.name": t2Jamming?.name ?? "",
     "t2.jamming.number": t2Jamming?.number ?? "",
   });
+  
+
+  applyClassBinds({
+  "t1.timeout.1": t1.timeoutDots?.[0] ?? "Dot",
+  "t1.timeout.2": t1.timeoutDots?.[1] ?? "Dot",
+  "t1.timeout.3": t1.timeoutDots?.[2] ?? "Dot",
+  "t1.review.1":  t1.reviewDot ?? "Dot OfficialReview",
+
+  "t2.timeout.1": t2.timeoutDots?.[0] ?? "Dot",
+  "t2.timeout.2": t2.timeoutDots?.[1] ?? "Dot",
+  "t2.timeout.3": t2.timeoutDots?.[2] ?? "Dot",
+  "t2.review.1":  t2.reviewDot ?? "Dot OfficialReview",
+  });
+
 
   // Later:
   // setShown("secondary", !!m.secondaryClock);

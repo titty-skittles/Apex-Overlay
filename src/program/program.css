@@ -5,6 +5,9 @@ html, body, #app {
   background-color: rgb(0, 255, 0);
 }
 
+*, *::before, *::after { box-sizing: border-box; }
+
+
 .overlay-stage{
   position: fixed;
   inset: 0;
@@ -109,9 +112,13 @@ body.program .overlay-safe{
   display:grid;
   grid-template-columns: 1fr auto;
   font-family: "Bebas Kai";
-  align-items:center;
-  min-width:0;
-  height:100%;
+  position: relative;
+}
+
+.teamHead .teamName,
+.teamHead .teamScore{
+  display: flex;
+  align-items: center;
 }
 
 .teamHead .teamName{
@@ -122,13 +129,15 @@ body.program .overlay-safe{
 }
 
 .teamHead .teamScore{
-  padding: .15rem .55rem;
-  min-width: 3.4ch;
-  text-align:right;
+  padding: 0 .6rem;
+  justify-content: right;
+  font-size: 1em;
+  min-width: 5ch;
   clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
 
+
     /* 🔑 overlap to hide the seam */
-  margin-left: -18px;     /* tune: 10–18px */
+  margin-left: -0.8em;
   z-index: 2;
   position: relative;
 }
@@ -174,53 +183,126 @@ body.program .overlay-safe{
   clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%);
 }
 
-
-.jamNum{}
-.statusText{
-  opacity:.9;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
 /* --- JAMMER ROWS --- */
 .jammerRow{
   grid-row:2;
+  font-size: 0.7em;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content: flex-start;
   gap: 1ch;
-  padding: .1rem .55rem;
+  padding: 0 0 0 .3em;
+
+  height: 100%;
+  min-height: 0;
+
   background:#262626;
   color:#fff;
+
   min-width:0;
+  line-height: 1.1;
 }
 
 .jammerName{
+  font-family:"Coolvetica Bk";
   min-width:0;
   display:flex;
   gap:.6ch;
   align-items:baseline;
 }
 
-.jammerNum{
-  font-family:"Azeret Mono";
-  font-style:italic;
+.jammingNum{
+  flex: 0 0 auto;
+  padding: 0 .1em 0 0;
+  font-style: italic;
   font-variant-numeric: tabular-nums;
-  opacity:.95;
 }
 
-.jammerSkater{
-  font-family:"Coolvetica Bk";
+.jammingSkater{
+  min-width: 0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
+.jamRight{
+  margin-left: auto;
+  display: inline-flex;
+  align-items: stretch; 
+  gap: .6ch;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  height: 100%;           /* 🔑 match jammerRow height */
+}
+
+
+.jamDelta,
+.teamJamStatus{
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+
 .jamDelta{
   font-family:"Azeret Mono";
+  font-size: 0.9em;
+  padding-right: 0.3em;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
   font-style:italic;
-  font-variant-numeric: tabular-nums;
-  white-space:nowrap;
-  opacity:.95;
 }
+
+.teamJamStatus{
+  display: inline-flex;   /* background follows the box */
+  align-items: center;    /* center the text within the filled height */
+  height: 100%;           /* 🔑 fill jamRight/jammerRow height */
+  padding: 0 .3em;        /* horizontal padding */
+  line-height: 1;
+  margin-left:-0.4em;
+
+  font-family: "Coolvetica Rg";
+  font-size: 0.8em;
+  font-style: italic;
+
+}
+
+
+.teamJamStatus:empty{ display: none; }
+
+.team1 .teamJamStatus {
+  color: var(--team-one-secondary);
+  background-color: royalblue;
+}
+
+.team-two .teamJamStatus {
+  color: var(--team-two-secondary);
+  background-color: var(--team-two-primary);
+}
+
+
+
+.timeoutblk { 
+  display: flex; 
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px; 
+  justify-content: space-evenly; 
+  z-index: 10; 
+  width: 100%; 
+  height: 8px;}
+
+.Dot { border: black 1px solid; background-color: lightgray; width: 20%;}
+.Dot.Used {  background-color: rgba(0,0,0,0);}
+.Dot.Current { background-color: rgb(0,0,0); }
+.Dot.Used.Current { background-color: rgb(255, 255, 255); }
+.Dot.Current { animation: DotActive 2s infinite steps(120); } 
+@keyframes DotActive { 
+  0% { background-color: rgb(255, 255, 255); } 50% { background-color: rgba(255, 255, 255, 0); } 100% { background-color: rgb(255, 255, 255); } 
+  }
+.Dot.OfficialReview{
+  background-color: darkgrey;
+  border-radius: 4px;
+}
+.Dot.OfficialReview.Used{ background-color: rgba(0,0,0,0);}

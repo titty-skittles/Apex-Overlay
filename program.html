@@ -36,14 +36,25 @@
             <!-- TEAM 1 HEADER (top-middle) -->
             <section class="teamHead team1">
               <div class="teamName" data-bind="t1.name.long"></div>
-              <div class="teamScore" data-bind="t1.score" ></div>
+              <div class="teamScore" data-bind="t1.score" >246</div>
+              <div class="timeoutblk">
+                <div data-bind="t1.timeout.3"></div>
+                <div data-bind="t1.timeout.2"></div>
+                <div data-bind="t1.timeout.1"></div>
+                <div data-bind="t1.review.1"></div>
+              </div>
             </section>
 
             <!-- TEAM 2 HEADER (top-right) -->
             <section class="teamHead team2">
               <div class="teamName" data-bind="t2.name.long"></div>
-              <div class="teamScore" data-bind="t2.score"></div>
-              <div class="leadTag" data-bind="t2.jam.lead"></div>
+              <div class="teamScore" data-bind="t2.score" >246</div>
+              <div class="timeoutblk">
+                <div data-bind="t2.timeout.3"></div>
+                <div data-bind="t2.timeout.2"></div>
+                <div data-bind="t2.timeout.1"></div>
+                <div data-bind="t2.review.1"></div>
+              </div>
             </section>
 
             <!-- JAM STRIP (bottom-left) -->
@@ -53,12 +64,17 @@
             </section>
 
             <!-- TEAM 1 JAMMER LINE (bottom-middle) -->
-            <section class="jammerRow">
+            <section class="team1 jammerRow">
               <div class="jammerName">
-                <span class="jammerNum" data-bind="t1.jamming.number"></span>
-                <span class="jammerSkater" data-bind="t1.jamming.name"></span>
+                <span class="jammingNum" data-bind="t1.jamming.number"></span>
+                <span class="jammingSkater" data-bind="t1.jamming.name"></span>
               </div>
-              <div class="jamDelta">+<span data-bind="t1.jamScore"></span></div>
+                          
+              <div class="jamRight">
+                <div class="jamDelta">+<span data-bind="t1.jamScore"></span></div>
+                <div class="teamJamStatus" data-bind="t1.jam.status"></div>
+              </div>
+
             </section>
 
             <!-- TEAM 2 JAMMER LINE (bottom-right) -->
@@ -68,6 +84,7 @@
                 <span class="jammerSkater" data-bind="t2.jamming.name"></span>
               </div>
               <div class="jamDelta">+<span data-bind="t2.jamScore"></span></div>
+              <div class="jammerStatus" ></div>
             </section>
           </div>
 

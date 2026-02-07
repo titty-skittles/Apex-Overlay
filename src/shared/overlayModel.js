@@ -60,10 +60,40 @@ function bool(v) {
   return !!v; 
 }
 
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/**
+ * Build dot class strings from a "remaining" counter (timeouts/reviews).
+ * Assumes remaining decrements at START of the event.
+ * While active: the consumed dot flashes (Current) but is NOT marked Used until event ends.
+ */
+function buildDotsRemaining({ remaining, total, isActive = false, extraClass = "" }) {
+  const r = clamp(Number(remaining ?? 0), 0, total);
+  const usedCount = total - r;                 // remaining -> used
+
+  const pendingIndex = isActive ? usedCount : -1;                 // 1..total
+  const solidUsedCount = isActive ? Math.max(0, usedCount - 1) : usedCount;
+
+  return Array.from({ length: total }, (_, i) => {
+    const idx = i + 1;
+    const used = idx <= solidUsedCount;
+    const current = idx === pendingIndex;
+
+    return ["Dot", extraClass, used ? "Used" : "", current ? "Current" : ""]
+      .filter(Boolean)
+      .join(" ");
+  });
+}
+
+
+
+
 function jamStatusLabel({ starPass, lead, lost }) {
-  if (starPass) return "Star Pass";
-  if (lost) return "Lost";
-  if (lead) return "Lead";
+  if (starPass) return "STAR PASS";
+  if (lost) return "LOST";
+  if (lead) return "LEAD";
   return "";
 }
 
@@ -82,7 +112,22 @@ export function buildOverlayModel(get) {
       const lost = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lost`));
       const starPass = bool(get(`ScoreBoard.CurrentGame.Team(${t}).StarPass`));
 
-      return {
+      const timeouts = n(get(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0);
+      const officialReviews = n(get(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0);
+
+      const inTimeout = bool(get(`ScoreBoard.CurrentGame.Team(${t}).InTimeout`));
+      // If your WS exposes this, add it; otherwise default false.
+      const inOfficialReview = bool(get(`ScoreBoard.CurrentGame.Team(${t}).InOfficialReview`));
+      
+      const timeoutDots = buildDotsRemaining({ remaining: timeouts, total: 3, isActive: inTimeout });
+      const reviewDot = buildDotsRemaining({
+        remaining: officialReviews,
+        total: 1,
+        isActive: inOfficialReview,
+        extraClass: "OfficialReview",
+      })[0];
+
+      const team = {
         idx: t,
         name: s(get(`ScoreBoard.CurrentGame.Team(${t}).Name`), `Team ${t}`),
         initials: s(get(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
@@ -94,9 +139,17 @@ export function buildOverlayModel(get) {
         jamStatus: { lead, lost, starPass },
         jamStatusLabel: jamStatusLabel({ lead, lost, starPass }),
 
-        timeouts: n(get(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0),
-        officialReviews: n(get(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0),
+        timeouts,
+        officialReviews,
+        inTimeout,
+        inOfficialReview,
+
+        timeoutDots,
+        reviewDot,
       };
+
+
+      return team;
     }),
   };
 
@@ -146,7 +199,6 @@ export function buildOverlayModel(get) {
 
   return model;
 }
-
 
 
 export function formatClockMs(ms) {
