@@ -1,11 +1,16 @@
 import { createRawStateStore } from "../shared/rawStateStore.js";
 import { createScoreboardClient } from "../shared/scoreboardClient.js";
 import { buildOverlayModel, formatClockMs } from "../shared/overlayModel.js";
+import {
+  loadOverlaySettings,
+  saveOverlaySettings,
+  mergeOverlaySettings,
+} from "../shared/overlaySettings.js";
+import { createSseClient } from "../shared/sseClient.js";
 
 const store = createRawStateStore();
 
-const HIDE_CLOCK_TICKS = true;
-
+// ---- render helpers FIRST ----
 function safeRender() {
   try {
     render();
@@ -14,19 +19,48 @@ function safeRender() {
   }
 }
 
-function shouldLogWsKey(key) {
-  if (!HIDE_CLOCK_TICKS) return true;
-
-  // Hide noisy clock tick fields
-  if (
-    key.includes("ScoreBoard.CurrentGame.Clock(") &&
-    (key.endsWith(".Time") || key.endsWith(".InvertedTime"))
-  ) {
-    return false;
-  }
-
-  return true;
+let scheduled = false;
+function scheduleRender() {
+  if (scheduled) return;
+  scheduled = true;
+  requestAnimationFrame(() => {
+    scheduled = false;
+    safeRender();
+  });
 }
+
+// Re-render on any store update (throttled)
+store.subscribe(scheduleRender);
+
+// Single source of overlay settings in program:
+let overlaySettings = loadOverlaySettings();
+
+// SSE settings updates
+const sse = createSseClient("/sse");
+
+sse.onJson("overlay", (patch) => {
+  overlaySettings = mergeOverlaySettings(overlaySettings, patch);
+  saveOverlaySettings(overlaySettings); // optional, but handy for “reload keeps state”
+  scheduleRender();
+});
+
+sse.onStatus((st) => console.log("SSE status:", st));
+sse.connect();
+
+/* 
+function applyTeamColors(t1, t2) {
+  setVars(".teamHead.team1, .jammerRow.team1", {
+    "--team-primary": t1.colors?.primary,
+    "--team-secondary": t1.colors?.secondary,
+    "--team-text": t1.colors?.text,
+  });
+  setVars(".teamHead.team2, .jammerRow.team2", {
+    "--team-primary": t2.colors?.primary,
+    "--team-secondary": t2.colors?.secondary,
+    "--team-text": t2.colors?.text,
+  });
+}
+ */
 
 const clockNames = ["Period", "Jam", "Lineup", "Timeout", "Intermission"];
 const POSITION_BIND_KEYS = {
@@ -146,7 +180,8 @@ function getJammingSkater(team) {
 }
 
 function render() {
-  const m = buildOverlayModel(store.get);
+
+  const m = buildOverlayModel(store.get, overlaySettings);
 
   const pNum = m?.period?.number ?? 0;
 
@@ -210,20 +245,9 @@ function render() {
 
   // Later:
   // setShown("secondary", !!m.secondaryClock);
+  // applyTeamColors(t1, t2);
 }
 
-let scheduled = false;
-function scheduleRender() {
-  if (scheduled) return;
-  scheduled = true;
-  requestAnimationFrame(() => {
-    scheduled = false;
-    safeRender();
-  });
-}
-
-// Re-render on any store update (throttled)
-store.subscribe(scheduleRender);
 
 console.log("[program] main.js loaded");
 

@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <title>Overlay Control</title>
+    <script type="module" src="/src/control/main.js"></script>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body>
@@ -55,6 +58,80 @@
             <span id="connMeta" style="font-size:12px; color:#555;"></span>
           </div>
         </section>
+
+        <section style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+         <h2 style="margin: 0 0 12px; font-size: 18px;">Overlay – Team Settings</h2>
+
+          <!-- TEAM 1 -->
+          <div style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 8px; font-size: 15px;">Team 1</h3>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px;">
+              <input id="t1-name-long" placeholder="Team 1 – Long name"
+                style="padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px;" />
+
+              <input id="t1-name-short" placeholder="Short name"
+                style="padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px;" />
+
+              <label style="font-size: 13px;">
+                Primary colour<br />
+                <input id="t1-color-primary" type="color" />
+              </label>
+
+              <label style="font-size: 13px;">
+                Secondary colour<br />
+                <input id="t1-color-secondary" type="color" />
+              </label>
+
+              <label style="font-size: 13px;">
+                Text colour<br />
+                <input id="t1-color-text" type="color" />
+              </label>
+            </div>
+          </div>
+
+          <!-- TEAM 2 -->
+          <div>
+            <h3 style="margin: 0 0 8px; font-size: 15px;">Team 2</h3>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px;">
+              <input id="t2-name-long" placeholder="Team 2 – Long name"
+                style="padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px;" />
+
+              <input id="t2-name-short" placeholder="Short name"
+                style="padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px;" />
+
+              <label style="font-size: 13px;">
+                Primary colour<br />
+                <input id="t2-color-primary" type="color" />
+              </label>
+
+              <label style="font-size: 13px;">
+                Secondary colour<br />
+                <input id="t2-color-secondary" type="color" />
+              </label>
+
+              <label style="font-size: 13px;">
+                Text colour<br />
+                <input id="t2-color-text" type="color" />
+              </label>
+            </div>
+          </div>
+        </section>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap;">
+          <button id="overlayApplyBtn"
+            style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">
+            Apply to Program
+          </button>
+
+          <button id="overlayResetBtn"
+            style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer;">
+            Reset fields
+          </button>
+
+          <span id="overlayStatus" style="font-size:12px; color:#555;"></span>
+        </div>
+
 
       </div>
     </div>

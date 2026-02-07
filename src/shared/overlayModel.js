@@ -97,7 +97,8 @@ function jamStatusLabel({ starPass, lead, lost }) {
   return "";
 }
 
-export function buildOverlayModel(get) {
+export function buildOverlayModel(get, settings = {}) {
+  // console.log("[model] buildOverlayModel settings", settings);
   const model = {
     state: s(get("ScoreBoard.CurrentGame.State"), "Unknown"),
 
@@ -108,6 +109,8 @@ export function buildOverlayModel(get) {
     intermission: readClock(get, "Intermission"),
 
     teams: [1, 2].map((t) => {
+      const o = settings?.teams?.[t] || {};
+
       const lead = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lead`));
       const lost = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lost`));
       const starPass = bool(get(`ScoreBoard.CurrentGame.Team(${t}).StarPass`));
@@ -129,8 +132,15 @@ export function buildOverlayModel(get) {
 
       const team = {
         idx: t,
-        name: s(get(`ScoreBoard.CurrentGame.Team(${t}).Name`), `Team ${t}`),
-        initials: s(get(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
+        name: s(o.nameLong ?? get(`ScoreBoard.CurrentGame.Team(${t}).Name`), `Team ${t}`),
+        initials: s(o.nameShort ?? get(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
+
+        colors: {
+          primary: o.colors?.primary ?? null,
+          secondary: o.colors?.secondary ?? null,
+          text: o.colors?.text ?? null,
+        },
+
         score: n(get(`ScoreBoard.CurrentGame.Team(${t}).Score`), 0),
         jamScore: n(get(`ScoreBoard.CurrentGame.Team(${t}).JamScore`), 0),
 

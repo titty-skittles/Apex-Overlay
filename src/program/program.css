@@ -306,3 +306,13 @@ body.program .overlay-safe{
   border-radius: 4px;
 }
 .Dot.OfficialReview.Used{ background-color: rgba(0,0,0,0);}
+
+
+.teamHead{
+  background: var(--team-primary, #222);
+  color: var(--team-text, #fff);
+}
+.teamHead .teamScore{
+  background: var(--team-secondary, #eee);
+  color: #000;
+}
