@@ -34,6 +34,9 @@ function render() {
   const t1Jamming = getJammingSkater(t1);
   const t2Jamming = getJammingSkater(t2);
 
+  const jr1 = m.display?.jammerRow?.t1 ?? {};
+  const jr2 = m.display?.jammerRow?.t2 ?? {};
+
   applyTextBinds({
     "period.number": pNum,
     "period.suffix": ordinalSuffix(pNum),
@@ -59,10 +62,11 @@ function render() {
     ...bindTeamSkaters(t1, "t1"),
     ...bindTeamSkaters(t2, "t2"),
 
-    "t1.jamming.name": t1Jamming?.name ?? "",
-    "t1.jamming.number": t1Jamming?.number ?? "",
-    "t2.jamming.name": t2Jamming?.name ?? "",
-    "t2.jamming.number": t2Jamming?.number ?? "",
+    // use jamming binds for jam row as they are sticky to the previous jam during lineup
+    "t1.jamming.number": jr1.jammer?.number ?? "",
+    "t1.jamming.name": jr1.jammer?.name ?? "",
+    "t2.jamming.number": jr2.jammer?.number ?? "",
+    "t2.jamming.name": jr2.jammer?.name ?? "",
   });
 
   applyClassBinds({

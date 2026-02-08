@@ -1,3 +1,5 @@
+import { readPrevJamFielding, pickPrevJamNumber } from "./overlayUtils.js";
+
 const POSITIONS = ["Jammer", "Pivot", "Blocker1", "Blocker2", "Blocker3"];
 
 function readPosition(get, teamNum, pos) {
@@ -111,6 +113,7 @@ function jamStatusLabel({ starPass, lead, lost }) {
   if (lead) return "LEAD";
   return "";
 }
+
 
 export function buildOverlayModel(get, settings = {}) {
   // console.log("[model] buildOverlayModel settings", settings);
@@ -247,7 +250,7 @@ export function buildOverlayModel(get, settings = {}) {
     }
 
     if (m.timeout?.running) {
-      if (m.teams?.[0]?.inOfficialReview) rturn `Official Review - ${m.teams?.[0]?.name ?? "Team 1"}`;
+      if (m.teams?.[0]?.inOfficialReview) return `Official Review - ${m.teams?.[0]?.name ?? "Team 1"}`;
       if (m.teams?.[1]?.inOfficialReview) return `Official Review - ${m.teams?.[1]?.name ?? "Team 2"}`;
       if (m.officialReview) return "Official Review";
 
@@ -293,11 +296,69 @@ export function buildOverlayModel(get, settings = {}) {
   const label = (model.statusLabel ?? "").trim();
 
   const isJam = model.jam?.running === true;
-  const isTimeout = /(timeout|review)/i.test(label);
-  const isLineup = /^Lineup$/i.test(label);
-  const isIntermission = /^Intermission$/i.test(label);
-  const isOfficialScore = /^Official Score$/i.test(label);
-  const isPregame = /^Time to Derby$/i.test(label);
+  const isTimeout = model.timeout?.running === true;  
+  const isLineup = model.lineup?.running === true && !isJam && !isTimeout;
+  const isIntermission = model.intermission?.running === true;
+  const isOfficialScore = model.statusLabel === "Official Score";
+  const isPregame = model.statusLabel === "Time to Derby";
+
+  const periodNum = Number(model.period?.number ?? 0);
+  const jamNum = Number(model.jam?.number ?? 0);
+
+  // --- Jammer row display bundle (prevents "next jammer + previous jamScore/status")
+
+  model.display = model.display || {};
+  model.display.jammerRow = {};
+
+  // helper to read current jammer from onTrack (respects star pass)
+  function currentJammer(team) {
+    if (!team?.onTrack) return { name: "", number: "" };
+    const jammer = team.onTrack.find(p => p.pos === "Jammer");
+    const pivot  = team.onTrack.find(p => p.pos === "Pivot");
+    const use = team?.jamStatus?.starPass ? pivot : jammer;
+    return { name: use?.name ?? "", number: use?.number ?? "" };
+  }
+
+  for (const teamNum of [1, 2]) {
+    const teamIdx = teamNum - 1;
+    const team = model.teams?.[teamIdx];
+
+    let jammer = currentJammer(team);
+    let status = team?.jamStatusLabel ?? "";
+
+    if (isLineup) {
+      const prevJam = pickPrevJamNumber(get, periodNum, jamNum, teamNum);
+
+      // Use previous jam fielding for jammer identity
+      const prev = readPrevJamFielding(get, { periodNum, jamNum: prevJam, teamNum, pos: "Jammer" });
+
+      jammer = { name: prev.name, number: prev.number };
+
+      // Optional: blank status in lineup to avoid stale/misleading flags
+      status = "";
+
+      // Targeted debug only when name lookup fails
+      if (!jammer.name && jammer.number) {
+        console.log("[jammerRow] name missing (lineup)", {
+          teamNum,
+          periodNum,
+          jamNum,
+          prevJam,
+          ...prev._debug,
+          triedTeamSkaterKey: prev.skaterId
+            ? `ScoreBoard.CurrentGame.Team(${teamNum}).Skater(${prev.skaterId}).Name`
+            : null,
+        });
+      }
+    }
+
+    model.display.jammerRow[`t${teamNum}`] = {
+      jammer,
+      jamScore: team?.jamScore ?? 0, // ✅ keep LIVE for post-jam point adjustments
+      status,
+    };
+  }
+
 
 
   model.ui = {
