@@ -21,6 +21,7 @@ function s(v, fallback = "") {
 function readClock(get, name) {
   const base = `ScoreBoard.CurrentGame.Clock(${name})`;
   return {
+    name: s(get(`${base}.Name`), ""),
     number: n(get(`${base}.Number`), 0),
     timeMs: n(get(`${base}.Time`), 0),
     running: !!get(`${base}.Running`),
@@ -44,8 +45,10 @@ function pickPrimaryClock(m) {
 function pickSecondaryClock(m) {
   if (m.timeout?.running) return { mode: "timeout", label: "Timeout", clock: m.timeout };
   if (m.jam?.running) return { mode: "jam", label: "Jam", clock: m.jam };
-  if (m.lineup?.running) return { mode: "lineup", label: "Lineup", clock: m.lineup };
-
+  if (m.lineup?.running) {
+    const nm = String(m.lineup?.name ?? "").trim();
+    return { mode: "lineup", label: nm || "Lineup", clock: m.lineup };
+  }
   return null;
 }
 
@@ -87,8 +90,20 @@ function buildDotsRemaining({ remaining, total, isActive = false, extraClass = "
   });
 }
 
+function timeoutOwnerToTeamIndex(ownerRaw) {
+  const owner = String(ownerRaw ?? "").trim().toUpperCase();
+  if (!owner) return null;
 
+  // old format
+  if (owner === "1") return 0;
+  if (owner === "2") return 1;
 
+  // v5+ format: "<gameId>_1" / "<gameId>_2"
+  if (owner.endsWith("_1")) return 0;
+  if (owner.endsWith("_2")) return 1;
+
+  return null; // "O" or unknown
+}
 
 function jamStatusLabel({ starPass, lead, lost }) {
   if (starPass) return "STAR PASS";
@@ -99,6 +114,7 @@ function jamStatusLabel({ starPass, lead, lost }) {
 
 export function buildOverlayModel(get, settings = {}) {
   // console.log("[model] buildOverlayModel settings", settings);
+
   const model = {
     state: s(get("ScoreBoard.CurrentGame.State"), "Unknown"),
 
@@ -107,6 +123,11 @@ export function buildOverlayModel(get, settings = {}) {
     lineup: readClock(get, "Lineup"),
     timeout: readClock(get, "Timeout"),
     intermission: readClock(get, "Intermission"),
+    timeoutOwner: s(get("ScoreBoard.CurrentGame.TimeoutOwner"), ""),
+    officialReview: bool(get("ScoreBoard.CurrentGame.OfficialReview")),
+    officialScore: bool(get("ScoreBoard.CurrentGame.OfficialScore")),
+    inhibitFinalScore: bool(get("ScoreBoard.CurrentGame.InhibitFinalScore")),
+
 
     teams: [1, 2].map((t) => {
       const o = settings?.teams?.[t] || {};
@@ -119,7 +140,6 @@ export function buildOverlayModel(get, settings = {}) {
       const officialReviews = n(get(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0);
 
       const inTimeout = bool(get(`ScoreBoard.CurrentGame.Team(${t}).InTimeout`));
-      // If your WS exposes this, add it; otherwise default false.
       const inOfficialReview = bool(get(`ScoreBoard.CurrentGame.Team(${t}).InOfficialReview`));
       
       const timeoutDots = buildDotsRemaining({ remaining: timeouts, total: 3, isActive: inTimeout });
@@ -194,34 +214,105 @@ export function buildOverlayModel(get, settings = {}) {
     model.secondaryClock = null;
   }
 
-  // model.layout = primary.mode === "intermission" ? "single" : "dual";
-
   function computeStatusLabel(m) {
+    // console.log("[computeStatusLabel] called", {
+    //   intermission: !!m.intermission?.running,
+    //   secondaryMode: m.secondaryClock?.mode,
+    //   secondaryLabel: m.secondaryClock?.label,
+    //   timeoutRunning: !!m.timeout?.running,
+    //   officialReview: m.officialReview,
+    // });
+
     const inIntermission = !!m.intermission?.running;
-    const pregame = inIntermission && (Number(m.period?.number) === 0);
-    const unofficialScore = inIntermission && (Number(m.period?.number) === "");
-    const officialScore = inIntermission && false;
+    //if (Number(m.period?.number) === 0) return "Time to Derby";
+    if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
 
+    // --- End of game / score states
+    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
+    // Period 2 not running is the “game ended” signal in your feed
+    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
+    if (m.officialScore || isFinished) {
+      return "Official Score";
+    }
+    // If the game has ended but isn’t official yet, show Unofficial Score
+    if (gameEnded) {
+      return "Unofficial Score";
+    }
 
-    if (pregame) return "Time to Derby";
-    if (unofficialScore) return "Unofficial Score";
-    if (officialScore) return "Final Score";
     if (inIntermission) return "Intermission";
 
-    // Otherwise: use whatever your secondary clock represents
-    if (m.secondaryClock?.label) return m.secondaryClock.label;
+    const lineupName = String(m.lineup?.name ?? "").trim();
+    if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
+      return "Post Timeout";
+    }
 
-    // Optional fallback
-    return "Live";
+    if (m.timeout?.running) {
+      if (m.teams?.[0]?.inOfficialReview) rturn `Official Review - ${m.teams?.[0]?.name ?? "Team 1"}`;
+      if (m.teams?.[1]?.inOfficialReview) return `Official Review - ${m.teams?.[1]?.name ?? "Team 2"}`;
+      if (m.officialReview) return "Official Review";
+
+      const ownerRaw = String(m.timeoutOwner ?? "").trim();
+      const teamIdx = timeoutOwnerToTeamIndex(ownerRaw);
+      if (teamIdx != null) {
+        const teamName = m.teams?.[teamIdx]?.name ?? `Team ${teamIdx + 1}`;
+        return `Timeout - ${teamName}`;
+      }
+
+      const owner = ownerRaw.toUpperCase();
+      if (owner === "O") return "Official Timeout";
+      return "Timeout";
+    }
+
+    if (m.lineup?.running) {
+      const nm = String(m.lineup?.name ?? "").trim();
+      return nm || "Lineup";
+    }
+
+    // 3) JAM when JAM CLOCK is running
+    if (m.jam?.running) {
+      const n = m.jam?.number;
+      return n ? `Jam ${n}` : "Jam";
+    }
+          // fallback
+    return m.mainClock?.label ?? "Live";
   }
 
   model.statusLabel = computeStatusLabel(model);
+  // console.log("[phase]", {
+  //   label: model.statusLabel,
+  //   timeoutRunning: model.timeout?.running,
+  //   lineupRunning: model.lineup?.running,
+  //   lineupName: model.lineup?.name,
+  //   timeoutOwner: model.timeoutOwner,
+  //   officialReview: model.officialReview,
+  // });
 
 
 
+  // --- UI flags
+  const label = (model.statusLabel ?? "").trim();
+
+  const isJam = model.jam?.running === true;
+  const isTimeout = /(timeout|review)/i.test(label);
+  const isLineup = /^Lineup$/i.test(label);
+  const isIntermission = /^Intermission$/i.test(label);
+  const isOfficialScore = /^Official Score$/i.test(label);
+  const isPregame = /^Time to Derby$/i.test(label);
+
+
+  model.ui = {
+    showJamNum: isJam,
+    showJamRow: isJam,
+    showLineupRow: isLineup,
+    showTimeoutRow: isTimeout,
+    showIntermissionRow: isIntermission,
+    showPregameRow: isPregame,
+    showOfficialScoreRow: isOfficialScore,
+  };
 
   return model;
 }
+
 
 export function formatClockMs(ms) {
   const total = Math.max(0, Math.floor(n(ms) / 1000));

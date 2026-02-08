@@ -14,38 +14,41 @@ sse.onJson("model", (m) => {
 });
 sse.connect();
 
+function applyVisibilityBinds(binds) {
+  for (const [selector, visible] of Object.entries(binds)) {
+    const el = document.querySelector(selector);
+    if (!el) continue;
+    el.classList.toggle("is-hidden", !visible);
+  }
+}
+
+
 function render() {
   if (!model) return;
   const m = model;
 
-  const t1 = model.teams[0];
-  const t2 = model.teams[1];
-
+  const t1 = m.teams[0];
+  const t2 = m.teams[1];
   const pNum = m?.period?.number ?? 0;
-
 
   const t1Jamming = getJammingSkater(t1);
   const t2Jamming = getJammingSkater(t2);
 
   applyTextBinds({
-    // --- Period / Jam numbers
     "period.number": pNum,
-    "period.suffix": ordinalSuffix(pNum),   // optional
-    "jam.number": m?.jam?.number ?? 0,
+    "period.suffix": ordinalSuffix(pNum),
 
-    // --- Clocks
+    "status.label": m.statusLabel ?? "",
+    "jam.number": String(m?.jam?.number ?? ""),
+
     "main.time": formatClockMs(m.mainClock?.timeMs ?? 0),
     "secondary.time": formatClockMs(m.secondaryClock?.timeMs ?? 0),
-    "status.label": m.statusLabel ?? "",
 
-
-    // --- Teams
     "t1.name.long": t1.name || "",
     "t1.name.short": t1.initials || "",
     "t1.score": t1.score ?? 0,
     "t1.jamScore": t1.jamScore ?? 0,
     "t1.jam.status": t1.jamStatusLabel ?? "",
-
 
     "t2.name.long": t2.name || "",
     "t2.name.short": t2.initials || "",
@@ -53,33 +56,35 @@ function render() {
     "t2.jamScore": t2.jamScore ?? 0,
     "t2.jam.status": t2.jamStatusLabel ?? "",
 
-    // --- Skaters (example: jammer)
     ...bindTeamSkaters(t1, "t1"),
     ...bindTeamSkaters(t2, "t2"),
 
-    // actively jamming?
     "t1.jamming.name": t1Jamming?.name ?? "",
     "t1.jamming.number": t1Jamming?.number ?? "",
-
     "t2.jamming.name": t2Jamming?.name ?? "",
     "t2.jamming.number": t2Jamming?.number ?? "",
   });
-  
 
   applyClassBinds({
-  "t1.timeout.1": t1.timeoutDots?.[0] ?? "Dot",
-  "t1.timeout.2": t1.timeoutDots?.[1] ?? "Dot",
-  "t1.timeout.3": t1.timeoutDots?.[2] ?? "Dot",
-  "t1.review.1":  t1.reviewDot ?? "Dot OfficialReview",
+    "t1.timeout.1": t1.timeoutDots?.[0] ?? "Dot",
+    "t1.timeout.2": t1.timeoutDots?.[1] ?? "Dot",
+    "t1.timeout.3": t1.timeoutDots?.[2] ?? "Dot",
+    "t1.review.1":  t1.reviewDot ?? "Dot OfficialReview",
 
-  "t2.timeout.1": t2.timeoutDots?.[0] ?? "Dot",
-  "t2.timeout.2": t2.timeoutDots?.[1] ?? "Dot",
-  "t2.timeout.3": t2.timeoutDots?.[2] ?? "Dot",
-  "t2.review.1":  t2.reviewDot ?? "Dot OfficialReview",
+    "t2.timeout.1": t2.timeoutDots?.[0] ?? "Dot",
+    "t2.timeout.2": t2.timeoutDots?.[1] ?? "Dot",
+    "t2.timeout.3": t2.timeoutDots?.[2] ?? "Dot",
+    "t2.review.1":  t2.reviewDot ?? "Dot OfficialReview",
   });
 
+  // --- Visibility
+  // If SSE model doesn't include ui yet, fall back to label-based jam detection:
+  const label = String(m.statusLabel ?? "").trim();
+  const showJam = (m.ui?.showJamNum ?? /^Jam\b/i.test(String(m.statusLabel ?? "").trim()));
 
-  // Later:
-  // setShown("secondary", !!m.secondaryClock);
-  // applyTeamColors(t1, t2);
+  document.querySelector(".gameStatusStrip .jamNum")
+    ?.classList.toggle("is-hidden", !showJam);
+
+/*   document.querySelector("#jam-row")
+    ?.classList.toggle("is-hidden", !(m.ui?.showJamRow ?? showJam)); */
 }

@@ -1,6 +1,5 @@
 // server/sseServer.js
 import express from "express";
-
 import { buildOverlayModel } from "../src/shared/overlayModel.js";
 import { mergeOverlaySettings, DEFAULT_OVERLAY_SETTINGS } from "../src/shared/overlaySettings.js";
 import { startScoreboardClient } from "./scoreboardClient.js";
@@ -34,42 +33,33 @@ let lastOverlayUpdateAt = 0;
 let lastModelBroadcastAt = 0;
 let lastModelSizeBytes = 0;
 
-// If your scoreboardClient can expose these later, wire them in.
-// For now we’ll infer freshness from store updates if you expose hooks;
-// otherwise leave as null.
-
 // ---- overlay settings + scoreboard ingest ----
 let overlaySettings = structuredClone(DEFAULT_OVERLAY_SETTINGS);
-
-/* const store = startScoreboardClient({
-  wsUrl: process.env.SCOREBOARD_WS,
-  paths: [
-    "ScoreBoard.CurrentGame.Clock(Period)",
-    "ScoreBoard.CurrentGame.Clock(Jam)",
-    "ScoreBoard.CurrentGame.Team(1)",
-    "ScoreBoard.CurrentGame.Team(2)",
-    "ScoreBoard.CurrentGame.State",
-  ],
-
-  // OPTIONAL: if your startScoreboardClient supports callbacks, use these:
-  onStatus: (st) => {
-    if (typeof st?.connected === "boolean") scoreboardConnected = st.connected;
-    if (st?.error) {
-      lastScoreboardErrorAt = Date.now();
-      lastScoreboardError = String(st.error?.message || st.error || "");
-    }
-  },
-  onUpdate: () => {
-    lastScoreboardUpdateAt = Date.now();
-  },
-}); */
 
 // ---- model broadcast ----
 let lastModelJson = ""; // store the JSON string so we can send to late joiners
 
+let lastModel = null;
+
+const sticky = {
+  t1: { jammer: { name: "", number: "" }, status: "" },
+  t2: { jammer: { name: "", number: "" }, status: "" },
+};
+
 function broadcastModel() {
   const model = buildOverlayModel(store.get, overlaySettings);
+
+  // if (!model.ui) {
+  //   console.log("[broadcastModel] ui missing", {
+  //     statusLabel: model.statusLabel,
+  //     keys: Object.keys(model),
+  //   });
+  // } else {
+  //   console.log("[broadcastModel] ui OK", model.statusLabel, model.ui);
+  // }
+
   const json = JSON.stringify(model);
+
   //console.log("[broadcastModel] called");
   if (json === lastModelJson) return;
 
@@ -79,6 +69,7 @@ function broadcastModel() {
 
   const msg = `event: model\ndata: ${json}\n\n`;
   for (const c of clients) c.res.write(msg);
+
 }
 
 // ---- express ----
@@ -125,7 +116,10 @@ app.get("/health", (req, res) => {
     model: {
       lastBroadcastMsAgo: msAgo(lastModelBroadcastAt),
       lastPayloadBytes: lastModelSizeBytes,
+      lastOverlayUpdateMsAgo: msAgo(lastOverlayUpdateAt),
     },
+
+
   });
 });
 

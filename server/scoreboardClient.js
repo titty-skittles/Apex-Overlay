@@ -13,6 +13,31 @@ function clamp(n, lo, hi) {
   return Math.max(lo, Math.min(hi, n));
 }
 
+
+const DEBUG_WS = process.env.DEBUG_WS === "1";
+
+const WS_FILTER = (process.env.WS_FILTER || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+function shouldLogWsKey(key) {
+  if (!DEBUG_WS) return false;
+
+  // filter mode: only log keys containing any token
+  if (WS_FILTER.length && !WS_FILTER.some(tok => key.includes(tok))) return false;
+
+  // ignore noisy clock ticks
+  if (
+    key.includes("ScoreBoard.CurrentGame.Clock(") &&
+    (key.endsWith(".Time") || key.endsWith(".InvertedTime"))
+  ) return false;
+
+  return true;
+}
+
+
+
 export function startScoreboardClient({
   paths = [],
   staleMs = 5000,
@@ -36,8 +61,7 @@ export function startScoreboardClient({
 	let lastErrorAt = 0;
 	let lastError = "";
 
-
-
+  const lastLogged = new Map();
 
   function setStatus(partial = {}) {
     onStatus({
@@ -122,7 +146,17 @@ export function startScoreboardClient({
           const state = msg?.state ?? msg;
           if (!state || typeof state !== "object") return;
 
+          
           for (const [key, value] of Object.entries(state)) {
+            // log only when enabled, and only when value actually changes
+            if (shouldLogWsKey(key)) {
+              const prev = lastLogged.get(key);
+              if (!Object.is(prev, value)) {
+                lastLogged.set(key, value);
+                console.log("WS", key, value);
+              }
+            }
+
             store.set(key, value);
           }
 
