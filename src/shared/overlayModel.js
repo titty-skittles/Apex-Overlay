@@ -130,10 +130,23 @@ export function buildOverlayModel(get, settings = {}) {
         extraClass: "OfficialReview",
       })[0];
 
+      const wsNameLong = get(`ScoreBoard.CurrentGame.Team(${t}).Name`);
+      const wsNameShort = get (`ScoreBoard.CurrentGame.Team(${t}).Initials`);
+
+      const nameLong =
+        o.nameLong && o.nameLong.trim() !== ""
+          ? o.nameLong
+          : wsNameLong;
+
+      const nameShort =
+        o.nameShort && o.nameShort.trim() !== ""
+          ? o.nameShort
+          : wsNameShort;
+
       const team = {
         idx: t,
-        name: s(o.nameLong ?? get(`ScoreBoard.CurrentGame.Team(${t}).Name`), `Team ${t}`),
-        initials: s(o.nameShort ?? get(`ScoreBoard.CurrentGame.Team(${t}).Initials`), ""),
+        name: s(nameLong, `Team ${t}`),
+        initials: s(nameShort, ""),
 
         colors: {
           primary: o.colors?.primary ?? null,
@@ -209,7 +222,6 @@ export function buildOverlayModel(get, settings = {}) {
 
   return model;
 }
-
 
 export function formatClockMs(ms) {
   const total = Math.max(0, Math.floor(n(ms) / 1000));

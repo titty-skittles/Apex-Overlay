@@ -1,192 +1,28 @@
-import { createRawStateStore } from "../shared/rawStateStore.js";
-import { createScoreboardClient } from "../shared/scoreboardClient.js";
-import { buildOverlayModel, formatClockMs } from "../shared/overlayModel.js";
-import {
-  loadOverlaySettings,
-  saveOverlaySettings,
-  mergeOverlaySettings,
-} from "../shared/overlaySettings.js";
 import { createSseClient } from "../shared/sseClient.js";
+import { ordinalSuffix, getJammingSkater, bindTeamSkaters } from "../shared/overlayUtils.js";
+import { formatClockMs } from "../shared/overlayModel.js"
+import { applyTextBinds, applyClassBinds  } from "./binds.js";
 
-const store = createRawStateStore();
+let model = null;
 
-// ---- render helpers FIRST ----
-function safeRender() {
-  try {
-    render();
-  } catch (err) {
-    console.error("[program] render crashed:", err);
-  }
-}
-
-let scheduled = false;
-function scheduleRender() {
-  if (scheduled) return;
-  scheduled = true;
-  requestAnimationFrame(() => {
-    scheduled = false;
-    safeRender();
-  });
-}
-
-// Re-render on any store update (throttled)
-store.subscribe(scheduleRender);
-
-// Single source of overlay settings in program:
-let overlaySettings = loadOverlaySettings();
-
-// SSE settings updates
 const sse = createSseClient("/sse");
 
-sse.onJson("overlay", (patch) => {
-  overlaySettings = mergeOverlaySettings(overlaySettings, patch);
-  saveOverlaySettings(overlaySettings); // optional, but handy for “reload keeps state”
-  scheduleRender();
+sse.onStatus(console.log);
+sse.onJson("model", (m) => {
+  model = m;
+  render();
 });
-
-sse.onStatus((st) => console.log("SSE status:", st));
 sse.connect();
 
-/* 
-function applyTeamColors(t1, t2) {
-  setVars(".teamHead.team1, .jammerRow.team1", {
-    "--team-primary": t1.colors?.primary,
-    "--team-secondary": t1.colors?.secondary,
-    "--team-text": t1.colors?.text,
-  });
-  setVars(".teamHead.team2, .jammerRow.team2", {
-    "--team-primary": t2.colors?.primary,
-    "--team-secondary": t2.colors?.secondary,
-    "--team-text": t2.colors?.text,
-  });
-}
- */
-
-const clockNames = ["Period", "Jam", "Lineup", "Timeout", "Intermission"];
-const POSITION_BIND_KEYS = {
-  Jammer: "jammer",
-  Pivot: "pivot",
-  Blocker1: "blocker1",
-  Blocker2: "blocker2",
-  Blocker3: "blocker3",
-};
-
-function bindTeamSkaters(team, prefix) {
-  const binds = {};
-
-  if (!team?.onTrack) return binds;
-
-  for (const skater of team.onTrack) {
-    const key = POSITION_BIND_KEYS[skater.pos];
-    if (!key) continue;
-
-    binds[`${prefix}.${key}.name`] = skater.name ?? "";
-    binds[`${prefix}.${key}.number`] = skater.number ?? "";
-  }
-
-  return binds;
-}
-
-const paths = [
-  ...clockNames.map((c) => `ScoreBoard.CurrentGame.Clock(${c})`),
-  "ScoreBoard.CurrentGame.Team(1)",
-  "ScoreBoard.CurrentGame.Team(2)",
-  "ScoreBoard.CurrentGame.State",
-];
-
-
-const client = createScoreboardClient({
-  paths,
-  onUpdate: ({ key, value }) => {
-    if (
-      !(key.includes("ScoreBoard.CurrentGame.Clock(") &&
-        (key.endsWith(".Time") || key.endsWith(".InvertedTime")))
-    ) {
-      console.log("WS", key, value);
-    }
-    // console.log("WS", key, value);
-
-    store.setDeep(key, value);
-  },
-});
-
-client.start();
-
-const lastText = new Map();
-
-function ordinalSuffix(n) {
-  const x = Number(n) || 0;
-  const mod100 = x % 100;
-  if (mod100 >= 11 && mod100 <= 13) return "th";
-  switch (x % 10) {
-    case 1: return "st";
-    case 2: return "nd";
-    case 3: return "rd";
-    default: return "th";
-  }
-}
-
-function setText(bindKey, value) {
-  const next = String(value ?? "");
-
-  if (lastText.get(bindKey) === next) return;
-  lastText.set(bindKey, next);
-
-  const nodes = document.querySelectorAll(`[data-bind="${bindKey}"]`);
-  for (const el of nodes) el.textContent = next;
-
-  const legacy = document.getElementById(bindKey);
-  if (legacy) legacy.textContent = next;
-}
-function applyTextBinds(binds) {
-  for (const [key, value] of Object.entries(binds)) {
-    setText(key, value ?? "");
-  }
-}
-
-const lastClass = new Map();
-
-function setClass(bindKey, className) {
-  const next = String(className ?? "");
-
-  if (lastClass.get(bindKey) === next) return;
-  lastClass.set(bindKey, next);
-
-  const nodes = document.querySelectorAll(`[data-bind="${bindKey}"]`);
-  for (const el of nodes) el.className = next;
-
-  const legacy = document.getElementById(bindKey);
-  if (legacy) legacy.className = next;
-}
-function applyClassBinds(binds) {
-  for (const [key, value] of Object.entries(binds)) {
-    setClass(key, value ?? "");
-  }
-}
-
-
-function byPos(team, pos) {
-  return team?.onTrack?.find(p => p.pos === pos) ?? null;
-}
-
-function getJammingSkater(team) {
-  if (!team?.onTrack) return null;
-
-  const byPos = Object.fromEntries(team.onTrack.map(p => [p.pos, p]));
-
-  const starPass = !!team?.jamStatus?.starPass;
-
-  return starPass ? byPos.Pivot : byPos.Jammer;
-}
-
 function render() {
+  if (!model) return;
+  const m = model;
 
-  const m = buildOverlayModel(store.get, overlaySettings);
+  const t1 = model.teams[0];
+  const t2 = model.teams[1];
 
   const pNum = m?.period?.number ?? 0;
 
-  const t1 = m?.teams?.[0] ?? {};
-  const t2 = m?.teams?.[1] ?? {};
 
   const t1Jamming = getJammingSkater(t1);
   const t2Jamming = getJammingSkater(t2);
@@ -247,14 +83,3 @@ function render() {
   // setShown("secondary", !!m.secondaryClock);
   // applyTeamColors(t1, t2);
 }
-
-
-console.log("[program] main.js loaded");
-
-setTimeout(() => {
-  console.log("[program] initial model snapshot");
-  console.log(buildOverlayModel(store.get));
-}, 500);
-
-// paint
-safeRender();

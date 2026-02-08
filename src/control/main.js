@@ -1,7 +1,7 @@
 import { getSavedWsUrl, saveWsUrl } from "../shared/config.js";
 import { initOverlayControls } from "./overlayControls.js";
 import { initConnectionProbe } from "./connectionProbe.js";
-import { loadOverlaySettings } from "../shared/overlaySettings.js";
+import { createSseClient } from "../shared/sseClient.js";
 
 // --- DOM ---
 const wsInput = document.getElementById("wsUrl");
@@ -30,14 +30,25 @@ function getProgramUrl(wsUrl) {
 wsInput.value = getSavedWsUrl() || "ws://127.0.0.1:8000/WS/";
 
 // --- buttons ---
-saveBtn.addEventListener("click", () => {
+saveBtn.addEventListener("click", async () => {
   try {
-    const saved = saveWsUrl(wsInput.value);
+    const saved = saveWsUrl(wsInput.value); // your local storage
+    await saveServerWsUrl(saved);           // server config
     setStatus(`Saved WS URL: ${saved}`);
   } catch (e) {
     setStatus(e.message || String(e), false);
   }
 });
+
+(async () => {
+  try {
+    const r = await fetch("/api/config");
+    if (!r.ok) return;
+    const j = await r.json();
+    if (j.scoreboardWs) wsInput.value = j.scoreboardWs;
+  } catch {}
+})();
+
 
 openProgramBtn.addEventListener("click", () => {
   try {
@@ -49,9 +60,50 @@ openProgramBtn.addEventListener("click", () => {
   }
 });
 
+window.addEventListener("DOMContentLoaded", () => {
+  const sse = createSseClient("/sse");
+
+  sse.onJson("model", (m) => {
+    const el = document.getElementById("t1-name-long");
+    if (!el) return;
+
+    el.textContent = m?.teams?.[0]?.name ?? "";
+  });
+
+
+  /* sse.onJson("model", (m) => {
+    const t1El = document.getElementById("t1-ws-name");
+    const t2El = document.getElementById("t2-ws-name");
+    if (!t1El || !t2El) return;
+
+    t1El.textContent = m?.teams?.[0]?.name
+      ? `WS: ${m.teams[0].name}`
+      : "";
+
+    t2El.textContent = m?.teams?.[1]?.name
+      ? `WS: ${m.teams[1].name}`
+      : "";
+  });
+ */
+  sse.connect();
+});
+
+
+async function saveServerWsUrl(wsUrl) {
+  const r = await fetch("/api/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scoreboardWs: wsUrl }),
+  });
+  if (!r.ok) throw new Error("Failed to configure server WS");
+}
+
+
+
 copyProgramBtn.addEventListener("click", async () => {
   try {
     const saved = saveWsUrl(wsInput.value);
+    await saveServerWsUrl(saved);
     await navigator.clipboard.writeText(getProgramUrl(saved));
     setStatus("Copied Program URL to clipboard.");
   } catch (e) {
@@ -59,17 +111,8 @@ copyProgramBtn.addEventListener("click", async () => {
   }
 });
 
-// --- overlay settings ---
-let overlaySettings = loadOverlaySettings();
-const settingsBus = createOverlaySettingsBus();
-
 // overlay controls (names / colours / apply / reset)
-// IMPORTANT: initOverlayControls returns a small API we can call to refresh the form.
-const overlayUi = initOverlayControls({
-  settingsBus,
-  getSettings: () => overlaySettings,
-  setSettings: (next) => { overlaySettings = next || {}; },
-});
+initOverlayControls();
 
 // --- connection probe ---
 initConnectionProbe({
@@ -81,18 +124,4 @@ initConnectionProbe({
   connMeta: document.getElementById("connMeta"),
   saveWsUrl,
   setStatus,
-});
-
-// Keep the control UI in sync when settings change elsewhere (program tab / other control tab)
-settingsBus.subscribe((next) => {
-  overlaySettings = next || {};
-  overlayUi?.setForm?.(overlaySettings);
-});
-
-// Fallback: localStorage event (some browsers / contexts)
-window.addEventListener("storage", (e) => {
-  if (e.key === "apexOverlay.overlaySettings") {
-    overlaySettings = loadOverlaySettings();
-    overlayUi?.setForm?.(overlaySettings);
-  }
 });

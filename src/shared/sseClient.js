@@ -1,55 +1,14 @@
-// src/shared/sseClient.js
-
-/**
- * Create a small SSE client wrapper.
- *
- * Usage:
- *   const sse = createSseClient("/sse");
- *   sse.onJson("overlay", (data) => { ... });
- *   sse.on("error", () => { ... });
- *   sse.connect();
- *
- *   // later:
- *   sse.close();
- */
-export function createSseClient(url = "/sse") {
+export function createSseClient(url) {
   let es = null;
 
-  const handlers = new Map();      // eventName -> Set(fn)
-  const statusHandlers = new Set(); // fn(status)
+  const jsonHandlers = new Map();
+  const statusHandlers = new Set();
+  const registeredEvents = new Set(); // ✅
 
-  function emit(eventName, payload) {
-    const set = handlers.get(eventName);
-    if (!set) return;
-    for (const fn of set) {
-      try { fn(payload); } catch (e) { console.error(e); }
-    }
-  }
-
-  function emitStatus(status) {
+  function emitStatus(partial) {
     for (const fn of statusHandlers) {
-      try { fn(status); } catch (e) { console.error(e); }
+      try { fn(partial); } catch {}
     }
-  }
-
-  function on(eventName, fn) {
-    if (!handlers.has(eventName)) handlers.set(eventName, new Set());
-    handlers.get(eventName).add(fn);
-    return () => handlers.get(eventName)?.delete(fn);
-  }
-
-  function onJson(eventName, fn) {
-    return on(eventName, (ev) => {
-      // When wired through addEventListener, we’ll pass the raw MessageEvent.
-      // If someone calls emit manually, allow plain objects too.
-      const raw = ev?.data ?? ev;
-      try {
-        const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-        fn(data);
-      } catch (e) {
-        console.warn(`SSE ${eventName}: bad JSON`, raw);
-      }
-    });
   }
 
   function onStatus(fn) {
@@ -57,35 +16,57 @@ export function createSseClient(url = "/sse") {
     return () => statusHandlers.delete(fn);
   }
 
+
+  function ensureListener(eventName) {
+    if (!es) return;
+    if (registeredEvents.has(eventName)) return;
+    registeredEvents.add(eventName);
+
+    es.addEventListener(eventName, (ev) => {
+      const raw = ev.data;
+      let obj;
+      try { obj = JSON.parse(String(raw).trim()); }
+      catch { console.error(`SSE ${eventName}: bad JSON`, raw); return; }
+
+      const hs = jsonHandlers.get(eventName);
+      if (!hs) return;
+      for (const f of hs) {
+        try { f(obj); } catch (err) { console.error(`SSE ${eventName}: handler error`, err); }
+      }
+    });
+  }
+
+  function onJson(eventName, fn) {
+    if (!jsonHandlers.has(eventName)) jsonHandlers.set(eventName, new Set());
+    jsonHandlers.get(eventName).add(fn);
+    ensureListener(eventName); // ✅ works both pre/post connect
+    return () => jsonHandlers.get(eventName)?.delete(fn);
+  }
+
   function connect() {
-    if (es) return; // already connected
+    if (es) return;
+
+    emitStatus({ phase: "connecting", url });
     es = new EventSource(url);
 
-    emitStatus({ connected: false, state: "connecting" });
+    es.onopen = () => emitStatus({ phase: "open", url });
+    es.onerror = () => emitStatus({ phase: "error", url });
 
-    // Default "message" event if server uses unnamed events
-    es.onmessage = (ev) => emit("message", ev);
-
-    es.onopen = () => emitStatus({ connected: true, state: "open" });
-
-    // EventSource fires "error" on disconnects; it also auto-reconnects.
-    es.onerror = () => emitStatus({ connected: false, state: "error" });
-
-    // Wire all named handlers (except built-ins) to EventSource listeners
-    for (const [eventName] of handlers) {
-      if (eventName === "message") continue;
-      es.addEventListener(eventName, (ev) => emit(eventName, ev));
-    }
-
-    return es;
+    ensureListener("ping");
+    for (const name of jsonHandlers.keys()) ensureListener(name);
   }
 
   function close() {
-    if (!es) return;
-    es.close();
+    try { es?.close(); } catch {}
     es = null;
-    emitStatus({ connected: false, state: "closed" });
+    registeredEvents.clear(); // ✅ reset
+    emitStatus({ phase: "closed", url });
   }
 
-  return { on, onJson, onStatus, connect, close };
+  return {
+    connect,
+    close,
+    onStatus,
+    onJson,
+  };
 }
