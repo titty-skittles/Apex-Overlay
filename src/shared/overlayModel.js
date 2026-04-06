@@ -180,8 +180,8 @@ export function buildOverlayModel(get, settings = {}) {
           ? o.nameShort
           : wsNameShort;
 
-      const crgPrimaryBg = get('ScoreBoard.CurrentGame.Team(${t}).Color(overlay.bg)');
-      const crgSecondaryBg = get('ScoreBoard.CurrentGame.Team(${t}).Color(overlay.fg)');
+      const crgPrimaryBg = get(`ScoreBoard.CurrentGame.Team(${t}).Color(overlay.bg)`);
+      const crgSecondaryBg = get(`ScoreBoard.CurrentGame.Team(${t}).Color(overlay.fg)`);
 
       const team = {
         idx: t,

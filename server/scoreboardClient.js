@@ -150,6 +150,12 @@ export function startScoreboardClient({
 
           
           for (const [key, value] of Object.entries(state)) {
+/*             if (
+              key.startsWith("ScoreBoard.CurrentGame.Team(1).") ||
+              key.startsWith("ScoreBoard.CurrentGame.Team(2).")
+            ) {
+              console.log("[TEAM RAW]", key, value);
+            } */
             // log only when enabled, and only when value actually changes
             if (shouldLogWsKey(key)) {
               const prev = lastLogged.get(key);
