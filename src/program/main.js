@@ -34,6 +34,8 @@ function render() {
   const t1Jamming = getJammingSkater(t1);
   const t2Jamming = getJammingSkater(t2);
 
+  const isPregame = String(m.statusLabel ?? "").trim() === "Time to Derby";
+
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
 
@@ -42,6 +44,15 @@ function render() {
   if (document.body) {
     document.body.style.backgroundColor = m.background?.color ?? "transparent";
   }
+
+  document.querySelector(".gameStatusStrip .jamNum")
+    ?.classList.toggle("is-hidden", !showJam);
+
+  document.querySelector(".periodBadge")
+    ?.classList.toggle("is-hidden", isPregame);
+
+  document.querySelector(".secondaryTime")
+    ?.classList.toggle("is-hidden", isPregame);
 
   applyTextBinds({
     "period.number": pNum,
