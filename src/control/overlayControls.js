@@ -35,12 +35,17 @@ export function initOverlayControls() {
           },
         },
       },
+      background: {
+        mode: $("background-mode")?.value || "green",
+        color: $("background-color")?.value || "#00ff00",
+      }
     };
   }
 
   function fillForm(s) {
     const t1 = s?.teams?.[1] || DEFAULT_OVERLAY_SETTINGS.teams[1];
     const t2 = s?.teams?.[2] || DEFAULT_OVERLAY_SETTINGS.teams[2];
+    const bg = s?.background || DEFAULT_OVERLAY_SETTINGS.background;
 
     if ($("t1-name-long")) $("t1-name-long").value = t1.nameLong || "";
     if ($("t1-name-short")) $("t1-name-short").value = t1.nameShort || "";
@@ -53,6 +58,9 @@ export function initOverlayControls() {
     if ($("t2-color-primary")) $("t2-color-primary").value = t2.colors?.primary || "#000000";
     if ($("t2-color-secondary")) $("t2-color-secondary").value = t2.colors?.secondary || "#ffffff";
     if ($("t2-color-text")) $("t2-color-text").value = t2.colors?.text || "#ffffff";
+
+    if ($("background-mode")) $("background-mode").value = bg.mode || "green";
+    if ($("background-color")) $("background-color").value = bg.color || "#00ff00";
   }
 
   let statusTimer = null;
@@ -80,10 +88,13 @@ export function initOverlayControls() {
 
   $("overlayApplyBtn")?.addEventListener("click", async () => {
     const patch = readForm();
+    console.log("[control patch]", patch);
     settings = mergeOverlaySettings(settings, patch);
+    console.log("[control merged settings", settings);
 
     // Persist locally (control page convenience)
     settings = saveOverlaySettings(settings);
+    console.log("[control saved settings]", settings);
 
     setBusy(true);
     try {

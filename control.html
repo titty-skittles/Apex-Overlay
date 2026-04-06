@@ -120,6 +120,28 @@
             </div>
           </div>
         </section>
+
+        <section style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <h2 style="margin: 0 0 12px; font-size: 18px;">Program Background</h2>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px;">
+            <select id="background-mode"
+              style="padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px;">
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="magenta">Magenta</option>
+              <option value="black">Black</option>
+              <option value="transparent">Transparent</option>
+              <option value="custom">Custom colour</option>
+            </select>
+
+            <label style="font-size: 13px;">
+              Custom colour<br />
+              <input id="background-color" type="color" value="#00ff00" />
+            </label>
+          </div>
+        </section>
+
         <div style="display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap;">
           <button id="overlayApplyBtn"
             style="padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer;">

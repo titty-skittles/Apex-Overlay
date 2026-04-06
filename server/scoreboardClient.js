@@ -110,8 +110,10 @@ export function startScoreboardClient({
             lastCloseAt = Date.now();
             connected = false;
 
+ 
             const closeReason = String(reason || "");
             console.warn("[scoreboard] ws closed", code, closeReason);
+
 
             setStatus({
               connected,

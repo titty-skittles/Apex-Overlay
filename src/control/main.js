@@ -69,11 +69,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const t1ShortCrg = document.getElementById("t1-name-short-crg");
     const t2ShortCrg = document.getElementById("t2-name-short-crg");
 
-    console.log("[control crg]", {
-      el: t1LongCrg,
-      value: m?.teams?.[0]?.crgNameLong,
-    });
-
     if (t1LongCrg) t1LongCrg.textContent = m?.teams?.[0]?.crgNameLong ?? "";
     if (t2LongCrg) t2LongCrg.textContent = m?.teams?.[1]?.crgNameLong ?? "";
     if (t1ShortCrg) t1ShortCrg.textContent = m?.teams?.[0]?.crgNameShort ?? "";

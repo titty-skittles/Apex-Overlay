@@ -7,6 +7,9 @@ export const DEFAULT_OVERLAY_SETTINGS = {
     1: { nameLong: "", nameShort: "", colors: { primary: "", secondary: "", text: "" } },
     2: { nameLong: "", nameShort: "", colors: { primary: "", secondary: "", text: "" } },
   },
+  background: { mode: "green",
+    color:"#00ff00",
+  },
 };
 
 // ---- merge ----
@@ -16,6 +19,11 @@ export function mergeOverlaySettings(base, patch) {
   const p = patch || {};
 
   out.teams ??= {};
+
+  out.background = {
+    ...(out.background || {}),
+    ...(p.background || {}),
+  };
 
   out.teams[1] = {
     ...(out.teams[1] || {}),

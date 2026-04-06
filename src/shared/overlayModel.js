@@ -117,6 +117,21 @@ function jamStatusLabel({ starPass, lead, lost }) {
 
 export function buildOverlayModel(get, settings = {}) {
 
+  const backgroundMode = settings?.background?.mode || "green";
+  const backgroundCustom = settings?.background?.color || "#00ff00";
+
+  function resolveBackground(mode, custom) {
+    switch (mode) {
+      case "green": return "#00ff00";
+      case "blue": return "#0000ff";
+      case "magenta": return "#ff00ff";
+      case "black": return "#000000";
+      case "transparent": return "transparent";
+      case "custom": return custom || "#00ff00";
+      default: return "#00ff00";
+    }
+  }
+
   const model = {
     state: s(get("ScoreBoard.CurrentGame.State"), "Unknown"),
 
@@ -199,7 +214,14 @@ export function buildOverlayModel(get, settings = {}) {
 
       return team;
     }),
+
+    background: {
+      mode: backgroundMode,
+      color: resolveBackground(backgroundMode, backgroundCustom),
+    },
+
   };
+
 
   const primary = pickPrimaryClock(model);
 

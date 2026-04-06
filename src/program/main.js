@@ -37,6 +37,12 @@ function render() {
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
 
+  console.log("[program bg model]", m.background);
+
+  if (document.body) {
+    document.body.style.backgroundColor = m.background?.color ?? "transparent";
+  }
+
   applyTextBinds({
     "period.number": pNum,
     "period.suffix": ordinalSuffix(pNum),
