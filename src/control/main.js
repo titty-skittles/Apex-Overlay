@@ -64,30 +64,25 @@ window.addEventListener("DOMContentLoaded", () => {
   const sse = createSseClient("/sse");
 
   sse.onJson("model", (m) => {
-    const el = document.getElementById("t1-name-long");
-    if (!el) return;
+    const t1LongCrg = document.getElementById("t1-name-long-crg");
+    const t2LongCrg = document.getElementById("t2-name-long-crg");
+    const t1ShortCrg = document.getElementById("t1-name-short-crg");
+    const t2ShortCrg = document.getElementById("t2-name-short-crg");
 
-    el.textContent = m?.teams?.[0]?.name ?? "";
+    console.log("[control crg]", {
+      el: t1LongCrg,
+      value: m?.teams?.[0]?.crgNameLong,
+    });
+
+    if (t1LongCrg) t1LongCrg.textContent = m?.teams?.[0]?.crgNameLong ?? "";
+    if (t2LongCrg) t2LongCrg.textContent = m?.teams?.[1]?.crgNameLong ?? "";
+    if (t1ShortCrg) t1ShortCrg.textContent = m?.teams?.[0]?.crgNameShort ?? "";
+    if (t2ShortCrg) t2ShortCrg.textContent = m?.teams?.[1]?.crgNameShort ?? "";
+
   });
 
-
-  /* sse.onJson("model", (m) => {
-    const t1El = document.getElementById("t1-ws-name");
-    const t2El = document.getElementById("t2-ws-name");
-    if (!t1El || !t2El) return;
-
-    t1El.textContent = m?.teams?.[0]?.name
-      ? `WS: ${m.teams[0].name}`
-      : "";
-
-    t2El.textContent = m?.teams?.[1]?.name
-      ? `WS: ${m.teams[1].name}`
-      : "";
-  });
- */
   sse.connect();
 });
-
 
 async function saveServerWsUrl(wsUrl) {
   const r = await fetch("/api/config", {

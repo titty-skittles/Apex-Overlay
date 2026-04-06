@@ -49,12 +49,16 @@ function render() {
 
     "t1.name.long": t1.name || "",
     "t1.name.short": t1.initials || "",
+    "t1.name.long.crg": t1.crgNameLong || "",
+    "t1.name.short.crg": t1.crgNameShort || "",
     "t1.score": t1.score ?? 0,
     "t1.jamScore": t1.jamScore ?? 0,
     "t1.jam.status": t1.jamStatusLabel ?? "",
 
     "t2.name.long": t2.name || "",
     "t2.name.short": t2.initials || "",
+    "t2.name.long.crg": t2.crgNameLong || "",
+    "t2.name.short.crg": t2.crgNameShort || "",
     "t2.score": t2.score ?? 0,
     "t2.jamScore": t2.jamScore ?? 0,
     "t2.jam.status": t2.jamStatusLabel ?? "",

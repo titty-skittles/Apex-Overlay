@@ -116,7 +116,6 @@ function jamStatusLabel({ starPass, lead, lost }) {
 
 
 export function buildOverlayModel(get, settings = {}) {
-  // console.log("[model] buildOverlayModel settings", settings);
 
   const model = {
     state: s(get("ScoreBoard.CurrentGame.State"), "Unknown"),
@@ -170,6 +169,9 @@ export function buildOverlayModel(get, settings = {}) {
         idx: t,
         name: s(nameLong, `Team ${t}`),
         initials: s(nameShort, ""),
+
+        crgNameLong: s(wsNameLong, `Team ${t}`),
+        crgNameShort: s(wsNameShort, ""),
 
         colors: {
           primary: o.colors?.primary ?? null,
@@ -373,6 +375,7 @@ export function buildOverlayModel(get, settings = {}) {
 
   return model;
 }
+
 
 
 export function formatClockMs(ms) {
