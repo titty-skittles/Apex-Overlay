@@ -21,26 +21,18 @@ export function initConnectionProbe({
     return;
   }
 
-  let probe = {
-    ws: null,
-    url: "",
-    lastOpenAt: 0,
-    lastMsgAt: 0,
-    tickTimer: null,
-    reconnectTimer: null,
-    staleAfterMs: 8000,   // no messages for 8s => stale
-    reconnectMs: 1500,
-  };
+  let pollTimer = null;
+  let testRun = 0;
 
   function setConnUI(state, meta = "") {
     const map = {
-      idle:       { dot: "#999",    text: "Not connected",          border: "#ddd" },
-      connecting: { dot: "#f59e0b", text: "Connecting…",            border: "#f3c77a" },
+      idle:       { dot: "#999",    text: "Not connected",           border: "#ddd" },
+      connecting: { dot: "#f59e0b", text: "Testing…",                border: "#f3c77a" },
       open:       { dot: "#0ea5e9", text: "Connected (no data yet)", border: "#86d4f5" },
-      receiving:  { dot: "#16a34a", text: "Connected + receiving",  border: "#86efac" },
-      stale:      { dot: "#f97316", text: "Stale (no recent data)", border: "#fdba74" },
-      error:      { dot: "#b42318", text: "Error",                  border: "#f2b8b5" },
-      closed:     { dot: "#999",    text: "Disconnected",           border: "#ddd" },
+      receiving:  { dot: "#16a34a", text: "Connected + receiving",   border: "#86efac" },
+      stale:      { dot: "#f97316", text: "Stale (no recent data)",  border: "#fdba74" },
+      error:      { dot: "#b42318", text: "Error",                   border: "#f2b8b5" },
+      closed:     { dot: "#999",    text: "Disconnected",            border: "#ddd" },
     };
 
     const s = map[state] || map.idle;
@@ -50,137 +42,121 @@ export function initConnectionProbe({
     connMeta.textContent = meta;
   }
 
-  function clearProbeTimers() {
-    if (probe.tickTimer) clearInterval(probe.tickTimer);
-    if (probe.reconnectTimer) clearTimeout(probe.reconnectTimer);
-    probe.tickTimer = null;
-    probe.reconnectTimer = null;
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
   }
 
-  function stopProbe() {
-    clearProbeTimers();
-    if (probe.ws) {
-      try { probe.ws.close(); } catch {}
-    }
-    probe.ws = null;
-    probe.url = "";
-    probe.lastOpenAt = 0;
-    probe.lastMsgAt = 0;
-    setConnUI("idle", "");
+  async function saveServerWsUrl(wsUrl) {
+    const r = await fetch("/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scoreboardWs: wsUrl }),
+    });
+    if (!r.ok) throw new Error("Failed to configure server WS");
+    return r.json();
   }
 
-  function startProbe(url) {
-    // reset existing connection
-    clearProbeTimers();
-    if (probe.ws) {
-      try { probe.ws.close(); } catch {}
-    }
+  async function fetchHealth() {
+    const r = await fetch("/health");
+    if (!r.ok) throw new Error("Health check failed");
+    return r.json();
+  }
 
-    probe.url = url;
-    probe.lastOpenAt = 0;
-    probe.lastMsgAt = 0;
+  function paintFromHealth(health, url) {
+    const sb = health?.scoreboard;
 
-    setConnUI("connecting", url);
-
-    let ws;
-    try {
-      ws = new WebSocket(url);
-    } catch (e) {
-      setConnUI("error", String(e));
+    if (!sb?.configured) {
+      setConnUI("idle", "Server not configured");
       return;
     }
-    probe.ws = ws;
 
-    ws.addEventListener("open", () => {
-      probe.lastOpenAt = Date.now();
+    if (!sb.connected) {
+      setConnUI("closed", `Disconnected • ${url}`);
+      return;
+    }
+
+    if (sb.stale) {
+      const age = sb.lastMessageMsAgo != null
+        ? `Last message ${Math.floor(sb.lastMessageMsAgo / 1000)}s ago • ${url}`
+        : url;
+      setConnUI("stale", age);
+      return;
+    }
+
+    if (sb.lastMessageMsAgo == null) {
       setConnUI("open", `Open • ${url}`);
+      return;
+    }
 
-      probe.tickTimer = setInterval(() => {
-        const now = Date.now();
-
-        // never received a message yet
-        if (!probe.lastMsgAt) {
-          const secs = Math.floor((now - probe.lastOpenAt) / 1000);
-          if (now - probe.lastOpenAt > probe.staleAfterMs) {
-            setConnUI("stale", `Open, no messages for ${secs}s • ${url}`);
-          } else {
-            setConnUI("open", `Open, waiting for data (${secs}s) • ${url}`);
-          }
-          return;
-        }
-
-        // received messages; check freshness
-        const ageMs = now - probe.lastMsgAt;
-        const ageS = Math.floor(ageMs / 1000);
-        if (ageMs > probe.staleAfterMs) {
-          setConnUI("stale", `Last message ${ageS}s ago • ${url}`);
-        } else {
-          setConnUI("receiving", `Last message ${ageS}s ago • ${url}`);
-        }
-      }, 500);
-    });
-
-    ws.addEventListener("message", () => {
-      probe.lastMsgAt = Date.now();
-      setConnUI("receiving", `Receiving • ${url}`);
-    });
-
-    ws.addEventListener("error", () => {
-      setConnUI("error", `WebSocket error • ${url}`);
-    });
-
-    ws.addEventListener("close", (ev) => {
-      clearProbeTimers();
-      probe.ws = null;
-
-      const reason = (ev.reason || "").trim();
-      const meta = `Closed (${ev.code})${reason ? ` • ${reason}` : ""} • ${url}`;
-      setConnUI("closed", meta);
-
-      // auto-reconnect (only if the input still matches)
-      probe.reconnectTimer = setTimeout(() => {
-        if (wsInput.value.trim() === url) startProbe(url);
-      }, probe.reconnectMs);
-    });
+    const ageS = Math.floor(sb.lastMessageMsAgo / 1000);
+    setConnUI("receiving", `Last message ${ageS}s ago • ${url}`);
   }
 
-  // click: test connection
-  testConnBtn.addEventListener("click", () => {
+  async function runServerProbe(url) {
+    const runId = ++testRun;
+
+    stopPolling();
+    setConnUI("connecting", url);
+
+    await saveServerWsUrl(url);
+
+    let health = null;
+    for (let i = 0; i < 5; i++) {
+      await new Promise(resolve => setTimeout(resolve, 700));
+      health = await fetchHealth();
+      if (runId !== testRun) return;
+
+      paintFromHealth(health, url);
+
+      if (health?.scoreboard?.connected && !health?.scoreboard?.stale) {
+        break;
+      }
+    }
+
+    pollTimer = setInterval(async () => {
+      try {
+        const h = await fetchHealth();
+        if (runId !== testRun) return;
+        paintFromHealth(h, url);
+      } catch (e) {
+        if (runId !== testRun) return;
+        setConnUI("error", e.message || String(e));
+      }
+    }, 2000);
+
+    return health;
+  }
+
+  testConnBtn.addEventListener("click", async () => {
     try {
       const saved = saveWsUrl(wsInput.value);
-      startProbe(saved);
-      setStatus?.("Testing connection…");
+      testConnBtn.disabled = true;
+      await runServerProbe(saved);
+      setStatus?.("Testing server connection…");
     } catch (e) {
+      setConnUI("error", e.message || String(e));
       setStatus?.(e.message || String(e), false);
+    } finally {
+      testConnBtn.disabled = false;
     }
   });
 
-  // debounced: probe while typing (optional but handy)
-  let urlDebounce = null;
-  wsInput.addEventListener("input", () => {
-    if (urlDebounce) clearTimeout(urlDebounce);
-    urlDebounce = setTimeout(() => {
-      const raw = wsInput.value.trim();
-      if (!raw) { stopProbe(); return; }
+  // Initial passive status load only
+  (async () => {
+    try {
+      const health = await fetchHealth();
+      paintFromHealth(health, wsInput.value.trim());
+    } catch {
+      setConnUI("idle", "Press Test connection");
+    }
+  })();
 
-      try {
-        const saved = saveWsUrl(raw);
-        startProbe(saved);
-      } catch {
-        stopProbe();
-        setConnUI("idle", "Enter a valid ws:// URL to test");
-      }
-    }, 400);
-  });
-
-  // initial auto-probe on load
-  try {
-    const saved = saveWsUrl(wsInput.value);
-    startProbe(saved);
-  } catch {
-    setConnUI("idle", "Enter a valid ws:// URL to test");
-  }
-
-  // allow caller to stop it if needed
-  return { startProbe, stopProbe };
+  return {
+    refresh: async () => {
+      const health = await fetchHealth();
+      paintFromHealth(health, wsInput.value.trim());
+    },
+    stopProbe: stopPolling,
+  };
 }
