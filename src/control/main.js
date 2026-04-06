@@ -64,6 +64,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const sse = createSseClient("/sse");
 
   sse.onJson("model", (m) => {
+    overlayControls?.setLiveModel?.(m);
+
     const t1LongCrg = document.getElementById("t1-name-long-crg");
     const t2LongCrg = document.getElementById("t2-name-long-crg");
     const t1ShortCrg = document.getElementById("t1-name-short-crg");
@@ -102,7 +104,27 @@ copyProgramBtn.addEventListener("click", async () => {
 });
 
 // overlay controls (names / colours / apply / reset)
-initOverlayControls();
+const overlayControls = initOverlayControls();
+
+window.addEventListener("DOMContentLoaded", () => {
+  const sse = createSseClient("/sse");
+
+  sse.onJson("model", (m) => {
+    overlayControls?.setLiveModel?.(m);
+
+    const t1LongCrg = document.getElementById("t1-name-long-crg");
+    const t2LongCrg = document.getElementById("t2-name-long-crg");
+    const t1ShortCrg = document.getElementById("t1-name-short-crg");
+    const t2ShortCrg = document.getElementById("t2-name-short-crg");
+
+    if (t1LongCrg) t1LongCrg.textContent = m?.teams?.[0]?.crgNameLong ?? "";
+    if (t2LongCrg) t2LongCrg.textContent = m?.teams?.[1]?.crgNameLong ?? "";
+    if (t1ShortCrg) t1ShortCrg.textContent = m?.teams?.[0]?.crgNameShort ?? "";
+    if (t2ShortCrg) t2ShortCrg.textContent = m?.teams?.[1]?.crgNameShort ?? "";
+  });
+
+  sse.connect();
+});
 
 // --- connection probe ---
 initConnectionProbe({

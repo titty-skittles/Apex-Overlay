@@ -191,6 +191,12 @@ export function buildOverlayModel(get, settings = {}) {
         crgNameLong: s(wsNameLong, `Team ${t}`),
         crgNameShort: s(wsNameShort, ""),
 
+
+        crgColors: {
+          primaryBg: s(crgPrimaryBg, ""),
+          secondaryBg: s(crgSecondaryBg, ""),
+        },
+
         colors: {
           primaryBg: o.colors?.primaryBg || s(crgPrimaryBg, "") || "",
           secondaryBg: o.colors?.secondaryBg || s(crgSecondaryBg, "") || "",

@@ -49,6 +49,7 @@ function wireColorPair(colorId, hexId) {
 
 export function initOverlayControls() {
   let settings = loadOverlaySettings();
+  let liveModel = null;
 
   function readForm() {
     return {
@@ -171,10 +172,41 @@ export function initOverlayControls() {
   });
 
   $("overlayDefaultsBtn")?.addEventListener("click", () => {
-    settings = structuredClone(DEFAULT_OVERLAY_SETTINGS);
-    fillForm(settings);
-    saveOverlaySettings(settings);
-    setStatus("Defaults loaded", "info");
+    if (!liveModel) {
+      setStatus("No live CRG data available", "error");
+      return;
+    }
+
+    const t1 = liveModel.teams?.[0] || {};
+    const t2 = liveModel.teams?.[1] || {};
+
+    fillForm({
+      teams: {
+        1: {
+          nameLong: t1.crgNameLong || "",
+          nameShort: t1.crgNameShort || "",
+          colors: {
+            primaryBg: t1.crgColors?.primaryBg || "",
+            primaryText: t1.crgColors?.primaryText || "",
+            secondaryBg: t1.crgColors?.secondaryBg || "",
+            secondaryText: t1.crgColors?.secondaryText || "",
+          },
+        },
+        2: {
+          nameLong: t2.crgNameLong || "",
+          nameShort: t2.crgNameShort || "",
+          colors: {
+            primaryBg: t2.crgColors?.primaryBg || "",
+            primaryText: t2.crgColors?.primaryText || "",
+            secondaryBg: t2.crgColors?.secondaryBg || "",
+            secondaryText: t2.crgColors?.secondaryText || "",
+          },
+        },
+      },
+      background: settings?.background || DEFAULT_OVERLAY_SETTINGS.background,
+    });
+
+    setStatus("Loaded current CRG values into form", "info");
   });
 
   return {
@@ -182,6 +214,9 @@ export function initOverlayControls() {
     setForm(next) {
       settings = next || {};
       fillForm(settings);
+    },
+    setLiveModel(nextModel) {
+      liveModel = nextModel || null;
     },
   };
 }
