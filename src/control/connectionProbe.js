@@ -78,7 +78,7 @@ export function initConnectionProbe({
 
     if (sb.stale) {
       const age = sb.lastMessageMsAgo != null
-        ? `Last message ${Math.floor(sb.lastMessageMsAgo / 1000)}s ago • ${url}`
+        ? `Last test message ${Math.floor(sb.lastMessageMsAgo / 1000)}s ago • ${url}`
         : url;
       setConnUI("stale", age);
       return;
@@ -90,7 +90,7 @@ export function initConnectionProbe({
     }
 
     const ageS = Math.floor(sb.lastMessageMsAgo / 1000);
-    setConnUI("receiving", `Last message ${ageS}s ago • ${url}`);
+    setConnUI("receiving", `Last test message ${ageS}s ago • ${url}`);
   }
 
   async function runServerProbe(url) {
