@@ -10,6 +10,43 @@ import { publishOverlaySettings } from "../shared/overlayPublisher.js";
 
 function $(id) { return document.getElementById(id); }
 
+function normalizeHex(value) {
+  const v = String(value || "").trim();
+  if (!v) return "";
+
+  const withHash = v.startsWith("#") ? v : `#${v}`;
+  return /^#[0-9a-fA-F]{6}$/.test(withHash) ? withHash.toUpperCase() : "";
+}
+
+function setColorPair(colorId, hexId, value, fallback) {
+  const colorEl = $(colorId);
+  const hexEl = $(hexId);
+  const next = normalizeHex(value) || fallback;
+
+  if (colorEl) colorEl.value = next;
+  if (hexEl) hexEl.value = next;
+}
+
+function wireColorPair(colorId, hexId) {
+  const colorEl = $(colorId);
+  const hexEl = $(hexId);
+  if (!colorEl || !hexEl) return;
+
+  colorEl.addEventListener("input", () => {
+    hexEl.value = colorEl.value.toUpperCase();
+  });
+
+  hexEl.addEventListener("input", () => {
+    const norm = normalizeHex(hexEl.value);
+    if (norm) colorEl.value = norm;
+  });
+
+  hexEl.addEventListener("blur", () => {
+    const norm = normalizeHex(hexEl.value);
+    hexEl.value = norm || colorEl.value.toUpperCase() || "";
+  });
+}
+
 export function initOverlayControls() {
   let settings = loadOverlaySettings();
 
@@ -51,20 +88,20 @@ export function initOverlayControls() {
 
     if ($("t1-name-long")) $("t1-name-long").value = t1.nameLong || "";
     if ($("t1-name-short")) $("t1-name-short").value = t1.nameShort || "";
-    if ($("t1-color-primary-bg")) $("t1-color-primary-bg").value = t1.colors?.primaryBg || "#000000";
-    if ($("t1-color-primary-text")) $("t1-color-primary-text").value = t1.colors?.primaryText || "#ffffff";
-    if ($("t1-color-secondary-bg")) $("t1-color-secondary-bg").value = t1.colors?.secondaryBg || "#000000";
-    if ($("t1-color-secondary-text")) $("t1-color-secondary-text").value = t1.colors?.secondaryText || "#ffffff";
+    setColorPair("t1-color-primary-bg", "t1-color-primary-bg-hex", t1.colors?.primaryBg, "#000000");
+    setColorPair("t1-color-primary-text", "t1-color-primary-text-hex", t1.colors?.primaryText, "#FFFFFF");
+    setColorPair("t1-color-secondary-bg", "t1-color-secondary-bg-hex", t1.colors?.secondaryBg, "#000000");
+    setColorPair("t1-color-secondary-text", "t1-color-secondary-text-hex", t1.colors?.secondaryText, "#FFFFFF");
 
     if ($("t2-name-long")) $("t2-name-long").value = t2.nameLong || "";
     if ($("t2-name-short")) $("t2-name-short").value = t2.nameShort || "";
-    if ($("t2-color-primary-bg")) $("t2-color-primary-bg").value = t2.colors?.primaryBg || "#000000";
-    if ($("t2-color-primary-text")) $("t2-color-primary-text").value = t2.colors?.primaryText || "#ffffff";
-    if ($("t2-color-secondary-bg")) $("t2-color-secondary-bg").value = t2.colors?.secondaryBg || "#000000";
-    if ($("t2-color-secondary-text")) $("t2-color-secondary-text").value = t2.colors?.secondaryText || "#ffffff";
+    setColorPair("t2-color-primary-bg", "t2-color-primary-bg-hex", t2.colors?.primaryBg, "#000000");
+    setColorPair("t2-color-primary-text", "t2-color-primary-text-hex", t2.colors?.primaryText, "#FFFFFF");
+    setColorPair("t2-color-secondary-bg", "t2-color-secondary-bg-hex", t2.colors?.secondaryBg, "#000000");
+    setColorPair("t2-color-secondary-text", "t2-color-secondary-text-hex", t2.colors?.secondaryText, "#FFFFFF");
 
     if ($("background-mode")) $("background-mode").value = bg.mode || "green";
-    if ($("background-color")) $("background-color").value = bg.color || "#00ff00";
+    setColorPair("background-color", "background-color-hex", bg.color, "#00FF00");
   }
 
   let statusTimer = null;
@@ -73,7 +110,7 @@ export function initOverlayControls() {
     if (!el) return;
 
     el.textContent = msg || "";
-    el.dataset.kind = kind; // optional for CSS: [data-kind="error"] etc.
+    el.dataset.kind = kind;
 
     if (statusTimer) clearTimeout(statusTimer);
     statusTimer = setTimeout(() => {
@@ -87,34 +124,41 @@ export function initOverlayControls() {
     if (btn) btn.disabled = !!isBusy;
   }
 
-  // initial paint
   fillForm(settings);
+
+  wireColorPair("t1-color-primary-bg", "t1-color-primary-bg-hex");
+  wireColorPair("t1-color-primary-text", "t1-color-primary-text-hex");
+  wireColorPair("t1-color-secondary-bg", "t1-color-secondary-bg-hex");
+  wireColorPair("t1-color-secondary-text", "t1-color-secondary-text-hex");
+
+  wireColorPair("t2-color-primary-bg", "t2-color-primary-bg-hex");
+  wireColorPair("t2-color-primary-text", "t2-color-primary-text-hex");
+  wireColorPair("t2-color-secondary-bg", "t2-color-secondary-bg-hex");
+  wireColorPair("t2-color-secondary-text", "t2-color-secondary-text-hex");
+
+  wireColorPair("background-color", "background-color-hex");
 
   $("overlayApplyBtn")?.addEventListener("click", async () => {
     const patch = readForm();
     console.log("[control patch]", patch);
     settings = mergeOverlaySettings(settings, patch);
-    console.log("[control merged settings", settings);
+    console.log("[control merged settings]", settings);
 
-    // Persist locally (control page convenience)
     settings = saveOverlaySettings(settings);
     console.log("[control saved settings]", settings);
 
     setBusy(true);
     try {
-      // Push to server -> program receives via SSE
       await publishOverlaySettings(settings);
       setStatus("Applied ✔", "ok");
     } catch (e) {
       console.error("[control] publish failed", e);
       setStatus("Publish failed ✖", "error");
-      // Up to you: keep local saved state even if publish fails (currently yes)
     } finally {
       setBusy(false);
     }
   });
 
-  // "Reload saved" behavior (current)
   $("overlayResetBtn")?.addEventListener("click", () => {
     const saved = loadOverlaySettings();
     settings = saved;
@@ -122,7 +166,6 @@ export function initOverlayControls() {
     setStatus("Reloaded saved", "info");
   });
 
-  // Optional: if you add a "Defaults" button
   $("overlayDefaultsBtn")?.addEventListener("click", () => {
     settings = structuredClone(DEFAULT_OVERLAY_SETTINGS);
     fillForm(settings);
