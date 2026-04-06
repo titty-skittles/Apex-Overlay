@@ -82,6 +82,8 @@ export function initOverlayControls() {
   }
 
   function fillForm(s) {
+    console.log("[fillForm input]", s);
+
     const t1 = s?.teams?.[1] || DEFAULT_OVERLAY_SETTINGS.teams[1];
     const t2 = s?.teams?.[2] || DEFAULT_OVERLAY_SETTINGS.teams[2];
     const bg = s?.background || DEFAULT_OVERLAY_SETTINGS.background;
@@ -139,20 +141,22 @@ export function initOverlayControls() {
   wireColorPair("background-color", "background-color-hex");
 
   $("overlayApplyBtn")?.addEventListener("click", async () => {
-    const patch = readForm();
-    console.log("[control patch]", patch);
-    settings = mergeOverlaySettings(settings, patch);
-    console.log("[control merged settings]", settings);
-
-    settings = saveOverlaySettings(settings);
-    console.log("[control saved settings]", settings);
-
-    setBusy(true);
     try {
+      const patch = readForm();
+      console.log("[control patch]", patch);
+
+      settings = mergeOverlaySettings(settings, patch);
+      console.log("[control merged settings]", settings);
+
+      settings = saveOverlaySettings(settings);
+      console.log("[control saved settings]", settings);
+      console.log("[control raw localStorage]", localStorage.getItem("apexOverlay.overlaySettings"));
+
+      setBusy(true);
       await publishOverlaySettings(settings);
       setStatus("Applied ✔", "ok");
     } catch (e) {
-      console.error("[control] publish failed", e);
+      console.error("[control apply failed]", e);
       setStatus("Publish failed ✖", "error");
     } finally {
       setBusy(false);

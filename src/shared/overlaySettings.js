@@ -1,4 +1,6 @@
 // src/shared/overlaySettings.js
+const KEY = "apexOverlay.overlaySettings";
+
 export const DEFAULT_OVERLAY_SETTINGS = {
   teams: {
     1: {
