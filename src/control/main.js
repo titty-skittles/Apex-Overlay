@@ -20,8 +20,8 @@ function setStatus(msg, good = true) {
 }
 
 function getProgramUrl(wsUrl) {
-  const u = new URL(window.location.href);
-  u.pathname = u.pathname.replace(/\/[^/]*$/, "/program.html");
+  const u = new URL(window.location.origin);
+  u.pathname = "/program";
   u.searchParams.set("ws", wsUrl);
   return u.toString();
 }

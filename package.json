@@ -4,11 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:sse": "PORT=5174 node server/sseServer.js",
+    "dev": "vite --host",
+    "dev:sse": "node server/sseServer.js",
     "dev:all": "concurrently -n VITE,SSE \"npm:dev\" \"npm:dev:sse\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server/sseServer.js"
   },
   "devDependencies": {
     "vite": "^7.2.4"

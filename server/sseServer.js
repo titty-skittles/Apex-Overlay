@@ -1,8 +1,14 @@
 // server/sseServer.js
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { buildOverlayModel } from "../src/shared/overlayModel.js";
 import { mergeOverlaySettings, DEFAULT_OVERLAY_SETTINGS } from "../src/shared/overlaySettings.js";
 import { startScoreboardClient } from "./scoreboardClient.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.resolve(__dirname, "../dist");
 
 const scoreboard = startScoreboardClient({
   paths: ["ScoreBoard.CurrentGame"],
@@ -75,6 +81,7 @@ function broadcastModel() {
 // ---- express ----
 const app = express();
 app.use(express.json());
+app.use(express.static(distPath));
 
 let currentWsUrl = ""; // optionally persist later
 
@@ -176,5 +183,18 @@ setInterval(() => {
     lastMsgAgoMs: sb.lastMessageAt ? (Date.now() - sb.lastMessageAt) : null,
   }); */
 }, 2000);
+
+app.get("/", (req, res) => {
+  res.redirect("/control");
+});
+
+app.get("/control", (req, res) => {
+  res.sendFile(path.join(distPath, "control.html"));
+});
+
+app.get("/program", (req, res) => {
+  res.sendFile(path.join(distPath, "program.html"));
+});
+
 
 app.listen(port, () => console.log(`SSE server on :${port}`));
