@@ -33,6 +33,11 @@ const POSITION_BIND_KEYS = {
 export function bindTeamSkaters(team, prefix) {
   const binds = {};
 
+  for (const key of Object.values(POSITION_BIND_KEYS)) {
+    binds[`${prefix}.${key}.name`] = "";
+    binds[`${prefix}.${key}.number`] = "";
+  }
+
   if (!team?.onTrack) return binds;
 
   for (const skater of team.onTrack) {
@@ -50,25 +55,31 @@ export function readTeamSkater(get, teamNum, skaterId) {
   if (!skaterId) return null;
   const base = `ScoreBoard.CurrentGame.Team(${teamNum}).Skater(${skaterId})`;
 
-  const name = s(get(`${base}.Name`), "");
-  const number = s(get(`${base}.RosterNumber`), "") || s(get(`${base}.Number`), "");
+  const name = String(get(`${base}.Name`), "");
+  const number = String(get(`${base}.RosterNumber`), "") || String(get(`${base}.Number`), "");
 
   return { id: String(skaterId), name, number };
 }
 
 export function readPrevJamFielding(get, { periodNum, jamNum, teamNum, pos /* "Jammer"|"Pivot" */ }) {
   const base = `ScoreBoard.CurrentGame.Period(${periodNum}).Jam(${jamNum}).TeamJam(${teamNum}).Fielding(${pos})`;
-  const skaterId = s(get(`${base}.Skater`), "");
-  const skaterNumber = s(get(`${base}.SkaterNumber`), "");
+  const skaterId = String(get(`${base}.Skater`) ?? "");
+  const number = String(get(`${base}.SkaterNumber`) ?? "");
 
-  const sk = readTeamSkater(get, teamNum, skaterId);
+  if (!skaterId) return {
+    name: "",
+    number: "",
+    skaterId: "",
+  };
+
+  const name =
+    String(get(`ScoreBoard.CurrentGame.Team(${teamNum}).Skater(${skaterId}).Name`) ?? "");
 
   return {
     pos,
     skaterId,
-    name: sk?.name ?? "",
-    number: sk?.number ?? skaterNumber ?? "",
-    _debug: { base, skaterId, skaterNumber },
+    name,
+    number,
   };
 }
 
