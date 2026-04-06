@@ -1,3 +1,15 @@
+:root {
+  --t1-primary-bg: #000000;
+  --t1-primary-text: #ffffff;
+  --t1-secondary-bg: #222222;
+  --t1-secondary-text: #ffffff;
+
+  --t2-primary-bg: #000000;
+  --t2-primary-text: #ffffff;
+  --t2-secondary-bg: #222222;
+  --t2-secondary-text: #ffffff;
+}
+
 html, body, #app {
   width: 100%;
   height: 100%;
@@ -141,22 +153,24 @@ body.program .overlay-safe{
   position: relative;
 }
 
-.team1 .teamName{
-  background:#1676ff;
-  color:#fff;
-}
-.team1 .teamScore{
-  background:#111;
-  color:#fff;
+.teamHead.team1 {
+  background: var(--t1-primary-bg);
+  color: var(--t1-primary-text);
 }
 
-.team2 .teamName{
-  background:#f4f4f4;
-  color:#111;
+.teamHead.team1 .teamScore {
+  background: var(--t1-secondary-bg);
+  color: var(--t1-secondary-text);
 }
-.team2 .teamScore{
-  background:#f4f4f4;
-  color:#111;
+
+.teamHead.team2 {
+  background: var(--t2-primary-bg);
+  color: var(--t2-primary-text);
+}
+
+.teamHead.team2 .teamScore {
+  background: var(--t2-secondary-bg);
+  color: var(--t2-secondary-text);
 }
 
 /* optional small LEAD tag on far right */
@@ -305,15 +319,5 @@ body.program .overlay-safe{
   border-radius: 4px;
 }
 .Dot.OfficialReview.Used{ background-color: rgba(0,0,0,0);}
-
-
-.teamHead{
-  background: var(--team-primary, #222);
-  color: var(--team-text, #fff);
-}
-.teamHead .teamScore{
-  background: var(--team-secondary, #eee);
-  color: #000;
-}
 
 .is-hidden { display: none !important; }

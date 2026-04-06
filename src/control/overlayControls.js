@@ -20,18 +20,20 @@ export function initOverlayControls() {
           nameLong: $("t1-name-long")?.value?.trim() || "",
           nameShort: $("t1-name-short")?.value?.trim() || "",
           colors: {
-            primary: $("t1-color-primary")?.value || "",
-            secondary: $("t1-color-secondary")?.value || "",
-            text: $("t1-color-text")?.value || "",
+            primaryBg: $("t1-color-primary-bg")?.value || "",
+            secondaryBg: $("t1-color-secondary-bg")?.value || "",
+            primaryText: $("t1-color-primary-text")?.value || "",
+            secondaryText: $("t1-color-secondary-text")?.value || "",
           },
         },
         2: {
           nameLong: $("t2-name-long")?.value?.trim() || "",
           nameShort: $("t2-name-short")?.value?.trim() || "",
           colors: {
-            primary: $("t2-color-primary")?.value || "",
-            secondary: $("t2-color-secondary")?.value || "",
-            text: $("t2-color-text")?.value || "",
+            primaryBg: $("t2-color-primary-bg")?.value || "",
+            secondaryBg: $("t2-color-secondary-bg")?.value || "",
+            primaryText: $("t2-color-primary-text")?.value || "",
+            secondaryText: $("t2-color-secondary-text")?.value || "",
           },
         },
       },
@@ -49,15 +51,17 @@ export function initOverlayControls() {
 
     if ($("t1-name-long")) $("t1-name-long").value = t1.nameLong || "";
     if ($("t1-name-short")) $("t1-name-short").value = t1.nameShort || "";
-    if ($("t1-color-primary")) $("t1-color-primary").value = t1.colors?.primary || "#000000";
-    if ($("t1-color-secondary")) $("t1-color-secondary").value = t1.colors?.secondary || "#ffffff";
-    if ($("t1-color-text")) $("t1-color-text").value = t1.colors?.text || "#ffffff";
+    if ($("t1-color-primary-bg")) $("t1-color-primary-bg").value = t1.colors?.primaryBg || "#000000";
+    if ($("t1-color-primary-text")) $("t1-color-primary-text").value = t1.colors?.primaryText || "#ffffff";
+    if ($("t1-color-secondary-bg")) $("t1-color-secondary-bg").value = t1.colors?.secondaryBg || "#000000";
+    if ($("t1-color-secondary-text")) $("t1-color-secondary-text").value = t1.colors?.secondaryText || "#ffffff";
 
     if ($("t2-name-long")) $("t2-name-long").value = t2.nameLong || "";
     if ($("t2-name-short")) $("t2-name-short").value = t2.nameShort || "";
-    if ($("t2-color-primary")) $("t2-color-primary").value = t2.colors?.primary || "#000000";
-    if ($("t2-color-secondary")) $("t2-color-secondary").value = t2.colors?.secondary || "#ffffff";
-    if ($("t2-color-text")) $("t2-color-text").value = t2.colors?.text || "#ffffff";
+    if ($("t2-color-primary-bg")) $("t2-color-primary-bg").value = t2.colors?.primaryBg || "#000000";
+    if ($("t2-color-primary-text")) $("t2-color-primary-text").value = t2.colors?.primaryText || "#ffffff";
+    if ($("t2-color-secondary-bg")) $("t2-color-secondary-bg").value = t2.colors?.secondaryBg || "#000000";
+    if ($("t2-color-secondary-text")) $("t2-color-secondary-text").value = t2.colors?.secondaryText || "#ffffff";
 
     if ($("background-mode")) $("background-mode").value = bg.mode || "green";
     if ($("background-color")) $("background-color").value = bg.color || "#00ff00";

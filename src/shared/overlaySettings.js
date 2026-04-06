@@ -1,16 +1,30 @@
 // src/shared/overlaySettings.js
-
-const KEY = "apexOverlay.overlaySettings";
-
 export const DEFAULT_OVERLAY_SETTINGS = {
   teams: {
-    1: { nameLong: "", nameShort: "", colors: { primary: "", secondary: "", text: "" } },
-    2: { nameLong: "", nameShort: "", colors: { primary: "", secondary: "", text: "" } },
+    1: {
+      nameLong: "",
+      nameShort: "",
+      colors: {
+        primaryBg: "",
+        primaryText: "",
+        secondaryBg: "",
+        secondaryText: "",
+      },
+    },
+    2: {
+      nameLong: "",
+      nameShort: "",
+      colors: {
+        primaryBg: "",
+        primaryText: "",
+        secondaryBg: "",
+        secondaryText: "",
+      },
+    },
   },
-  background: { mode: "green",
-    color:"#00ff00",
-  },
+  background: { mode: "green", color: "#00ff00" },
 };
+
 
 // ---- merge ----
 // shallow-ish deep merge tailored for this shape

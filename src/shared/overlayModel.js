@@ -180,6 +180,9 @@ export function buildOverlayModel(get, settings = {}) {
           ? o.nameShort
           : wsNameShort;
 
+      const crgPrimaryBg = get('ScoreBoard.CurrentGame.Team(${t}).Color(overlay.bg)');
+      const crgSecondaryBg = get('ScoreBoard.CurrentGame.Team(${t}).Color(overlay.fg)');
+
       const team = {
         idx: t,
         name: s(nameLong, `Team ${t}`),
@@ -189,9 +192,10 @@ export function buildOverlayModel(get, settings = {}) {
         crgNameShort: s(wsNameShort, ""),
 
         colors: {
-          primary: o.colors?.primary ?? null,
-          secondary: o.colors?.secondary ?? null,
-          text: o.colors?.text ?? null,
+          primaryBg: o.colors?.primaryBg || s(crgPrimaryBg, "") || "",
+          secondaryBg: o.colors?.secondaryBg || s(crgSecondaryBg, "") || "",
+          primaryText: o.colors?.primaryText || "",
+          secondaryText: o.colors?.secondaryText || "",
         },
 
         score: n(get(`ScoreBoard.CurrentGame.Team(${t}).Score`), 0),
@@ -362,7 +366,7 @@ export function buildOverlayModel(get, settings = {}) {
       status = "";
 
       // Targeted debug only when name lookup fails
-      if (!jammer.name && jammer.number) {
+/*       if (!jammer.name && jammer.number) {
         console.log("[jammerRow] name missing (lineup)", {
           teamNum,
           periodNum,
@@ -373,7 +377,7 @@ export function buildOverlayModel(get, settings = {}) {
             ? `ScoreBoard.CurrentGame.Team(${teamNum}).Skater(${prev.skaterId}).Name`
             : null,
         });
-      }
+      } */
     }
 
     model.display.jammerRow[`t${teamNum}`] = {

@@ -31,6 +31,8 @@ function render() {
   const t2 = m.teams[1];
   const pNum = m?.period?.number ?? 0;
 
+  // console.log("[PROGRAM colors]", t1?.colors, t2?.colors);
+
   const t1Jamming = getJammingSkater(t1);
   const t2Jamming = getJammingSkater(t2);
 
@@ -102,6 +104,16 @@ function render() {
     "t2.review.1":  t2.reviewDot ?? "Dot OfficialReview",
   });
 
+  document.documentElement.style.setProperty("--t1-primary-bg", t1?.colors?.primaryBg || "");
+  document.documentElement.style.setProperty("--t1-primary-text", t1?.colors?.primaryText || "");
+  document.documentElement.style.setProperty("--t1-secondary-bg", t1?.colors?.secondaryBg || "");
+  document.documentElement.style.setProperty("--t1-secondary-text", t1?.colors?.secondaryText || "");
+
+  document.documentElement.style.setProperty("--t2-primary-bg", t2?.colors?.primaryBg || "");
+  document.documentElement.style.setProperty("--t2-primary-text", t2?.colors?.primaryText || "");
+  document.documentElement.style.setProperty("--t2-secondary-bg", t2?.colors?.secondaryBg || "");
+  document.documentElement.style.setProperty("--t2-secondary-text", t2?.colors?.secondaryText || "");
+  
   // --- Visibility
   // If SSE model doesn't include ui yet, fall back to label-based jam detection:
   const label = String(m.statusLabel ?? "").trim();
