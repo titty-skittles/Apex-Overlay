@@ -22,76 +22,77 @@
         <div class="overlay-safe">
 
           <div class="scorebug" sbContext="ScoreBoard.CurrentGame">
-            <!-- CLOCK (top-left) -->
-            <section class="clockTop">
-              <div class="periodBadge">
-                <span class="periodNum" data-bind="period.number"></span>
-                <span class="periodSuffix" data-bind="period.suffix"></span>
-              </div>
-              <div class="periodTime Time Clock" data-bind="main.time"></div>
-              <div class="secondaryTime" data-bind="secondary.time"></div>
-            </section>
+            <!-- LEFT COLUMN: CLOCK + STATUS -->
+            <div class="scorebugCol clockCol">
+              <section class="clockTop">
+                <div class="periodBadge">
+                  <span class="periodNum" data-bind="period.number"></span>
+                  <span class="periodSuffix" data-bind="period.suffix"></span>
+                </div>
+                <div class="periodTime Time Clock" data-bind="main.time"></div>
+                <div class="secondaryTime" data-bind="secondary.time"></div>
+              </section>
 
-            <!-- TEAM 1 HEADER (top-middle) -->
-            <section class="teamHead team1">
-              <div class="teamName" data-bind="t1.name.short"></div>
-              <div class="teamScore" data-bind="t1.score" >246</div>
-              <div class="timeoutblk">
-                <div data-bind="t1.timeout.3"></div>
-                <div data-bind="t1.timeout.2"></div>
-                <div data-bind="t1.timeout.1"></div>
-                <div data-bind="t1.review.1"></div>
-              </div>
-            </section>
+              <section class="gameStatusStrip">
+                <div class="gameStatusInner">
+                  <div class="gameStatusText" data-bind="status.label"></div>
+                </div>
+              </section>
+            </div>
 
-            <!-- TEAM 2 HEADER (top-right) -->
-            <section class="teamHead team2">
-              <div class="teamName">
-                <span class="teamNameText" data-bind="t2.name.short"></span>
-              </div>
-              <div class="teamScore" data-bind="t2.score" >246</div>
-            <div class="timeoutblk">
-                <div data-bind="t2.timeout.3"></div>
-                <div data-bind="t2.timeout.2"></div>
-                <div data-bind="t2.timeout.1"></div>
-                <div data-bind="t2.review.1"></div>
-              </div>
-            </section>
+            <!-- MIDDLE COLUMN: TEAM 1 -->
+            <div class="scorebugCol team1Col">
+              <section class="teamHead team1">
+                <div class="teamName" data-bind="t1.name.short"></div>
+                <div class="teamScore" data-bind="t1.score">246</div>
+                <div class="timeoutblk">
+                  <div data-bind="t1.timeout.3"></div>
+                  <div data-bind="t1.timeout.2"></div>
+                  <div data-bind="t1.timeout.1"></div>
+                  <div data-bind="t1.review.1"></div>
+                </div>
+              </section>
 
-            <!-- JAM STRIP (bottom-left) -->
-            <section class="gameStatusStrip">
-              <div class="gameStatusInner">
-                <div class="gameStatusText" data-bind="status.label"></div>
-              </div>
-            </section>
+              <section class="team1 jammerRow">
+                <div class="jammerName">
+                  <span class="jammingNum" data-bind="t1.jamming.number"></span>
+                  <span class="jammingSkater" data-bind="t1.jamming.name"></span>
+                </div>
 
-            <!-- TEAM 1 JAMMER LINE (bottom-middle) -->
-            <section class="team1 jammerRow">
-              <div class="jammerName">
-                <span class="jammingNum" data-bind="t1.jamming.number"></span>
-                <span class="jammingSkater" data-bind="t1.jamming.name"></span>
-              </div>
-                          
-              <div class="jamRight">
-                <div class="jamDelta">+<span data-bind="t1.jamScore"></span></div>
-                <div class="teamJamStatus" data-bind="t1.jam.status"></div>
-              </div>
+                <div class="jamRight">
+                  <div class="jamDelta">+<span data-bind="t1.jamScore"></span></div>
+                  <div class="teamJamStatus" data-bind="t1.jam.status"></div>
+                </div>
+              </section>
+            </div>
 
-            </section>
+            <!-- RIGHT COLUMN: TEAM 2 -->
+            <div class="scorebugCol team2Col">
+              <section class="teamHead team2">
+                <div class="teamName">
+                  <span class="teamNameText" data-bind="t2.name.short"></span>
+                </div>
+                <div class="teamScore" data-bind="t2.score">246</div>
+                <div class="timeoutblk">
+                  <div data-bind="t2.timeout.3"></div>
+                  <div data-bind="t2.timeout.2"></div>
+                  <div data-bind="t2.timeout.1"></div>
+                  <div data-bind="t2.review.1"></div>
+                </div>
+              </section>
 
-            <!-- TEAM 2 JAMMER LINE (bottom-right) -->
-            <section class="team2 jammerRow">
-              <div class="jammerName">
-                <span class="jammingNum" data-bind="t2.jamming.number"></span>
-                <span class="jammingSkater" data-bind="t2.jamming.name"></span>
-              </div>
-                          
-              <div class="jamRight">
-                <div class="jamDelta">+<span data-bind="t2.jamScore"></span></div>
-                <div class="teamJamStatus" data-bind="t2.jam.status"></div>
-              </div>
+              <section class="team2 jammerRow">
+                <div class="jammerName">
+                  <span class="jammingNum" data-bind="t2.jamming.number"></span>
+                  <span class="jammingSkater" data-bind="t2.jamming.name"></span>
+                </div>
 
-            </section>
+                <div class="jamRight">
+                  <div class="jamDelta">+<span data-bind="t2.jamScore"></span></div>
+                  <div class="teamJamStatus" data-bind="t2.jam.status"></div>
+                </div>
+              </section>
+            </div>
           </div>
 
           <!-- future layers -->
