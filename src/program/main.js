@@ -38,6 +38,7 @@ function render() {
 
   const isPregame = String(m.statusLabel ?? "").trim() === "Time to Derby";
   const isIntermission = m.intermission?.running === true;
+  const isComingUp = (m.statusLabel ?? "").trim() === "Coming Up";
 
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
@@ -61,7 +62,7 @@ function render() {
     ?.classList.toggle("is-hidden", isPregame ||  isIntermission );
   
   document.querySelectorAll(".jammerRow").forEach((el) => {
-    el.classList.toggle("is-hidden", isPregame || isIntermission );
+    el.classList.toggle("is-hidden", isPregame || isIntermission || isComingUp );
   });
 
   applyTextBinds({

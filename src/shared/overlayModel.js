@@ -253,6 +253,38 @@ export function buildOverlayModel(get, settings = {}) {
     model.secondaryClock = null;
   }
 
+
+
+
+  // --- UI flags
+  const label = (model.statusLabel ?? "").trim();
+
+  const isJam = model.jam?.running === true;
+  const isTimeout = model.timeout?.running === true;  
+  const isLineup = model.lineup?.running === true && !isJam && !isTimeout;
+  const isIntermission = model.intermission?.running === true;
+  const isOfficialScore = model.statusLabel === "Official Score";
+  const isPregame = model.statusLabel === "Time to Derby";
+
+  const periodNum = Number(model.period?.number ?? 0);
+  const jamNum = Number(model.jam?.number ?? 0);
+
+  // --- Jammer row display bundle (prevents "next jammer + previous jamScore/status")
+
+  model.statusLabel = computeStatusLabel(model);
+  // console.log("[phase]", {
+  //   label: model.statusLabel,
+  //   timeoutRunning: model.timeout?.running,
+  //   lineupRunning: model.lineup?.running,
+  //   lineupName: model.lineup?.name,
+  //   timeoutOwner: model.timeoutOwner,
+  //   officialReview: model.officialReview,
+  // });
+  
+  model.display = model.display || {};
+  model.display.jammerRow = {};
+
+
   function computeStatusLabel(m) {
     // console.log("[computeStatusLabel] called", {
     //   intermission: !!m.intermission?.running,
@@ -261,24 +293,16 @@ export function buildOverlayModel(get, settings = {}) {
     //   timeoutRunning: !!m.timeout?.running,
     //   officialReview: m.officialReview,
     // });
-
+    const periodNum = Number(m.period?.number ?? 0);
+    const jamNum = Number(m.jam?.number ?? 0);
     const inIntermission = !!m.intermission?.running;
     //if (Number(m.period?.number) === 0) return "Time to Derby";
     if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
 
-    // --- End of game / score states
-    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
-    // Period 2 not running is the “game ended” signal in your feed
-    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
-    if (m.officialScore || isFinished) {
-      return "Official Score";
-    }
-    // If the game has ended but isn’t official yet, show Unofficial Score
-    if (gameEnded) {
-      return "Unofficial Score";
-    }
 
     if (inIntermission) return "Intermission";
+
+    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
 
     const lineupName = String(m.lineup?.name ?? "").trim();
     if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
@@ -317,39 +341,22 @@ export function buildOverlayModel(get, settings = {}) {
       const n = m.jam?.number;
       return n ? `Jam ${n}` : "Jam";
     }
+
+    // --- End of game / score states
+    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
+    // Period 2 not running is the “game ended” signal in your feed
+    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
+    if (m.officialScore || isFinished) {
+      return "Official Score";
+    }
+    // If the game has ended but isn’t official yet, show Unofficial Score
+    if (gameEnded) {
+      return "Unofficial Score";
+    }
+
           // fallback
     return m.mainClock?.label ?? "Live";
   }
-
-  model.statusLabel = computeStatusLabel(model);
-  // console.log("[phase]", {
-  //   label: model.statusLabel,
-  //   timeoutRunning: model.timeout?.running,
-  //   lineupRunning: model.lineup?.running,
-  //   lineupName: model.lineup?.name,
-  //   timeoutOwner: model.timeoutOwner,
-  //   officialReview: model.officialReview,
-  // });
-
-
-
-  // --- UI flags
-  const label = (model.statusLabel ?? "").trim();
-
-  const isJam = model.jam?.running === true;
-  const isTimeout = model.timeout?.running === true;  
-  const isLineup = model.lineup?.running === true && !isJam && !isTimeout;
-  const isIntermission = model.intermission?.running === true;
-  const isOfficialScore = model.statusLabel === "Official Score";
-  const isPregame = model.statusLabel === "Time to Derby";
-
-  const periodNum = Number(model.period?.number ?? 0);
-  const jamNum = Number(model.jam?.number ?? 0);
-
-  // --- Jammer row display bundle (prevents "next jammer + previous jamScore/status")
-
-  model.display = model.display || {};
-  model.display.jammerRow = {};
 
   // helper to read current jammer from onTrack (respects star pass)
   function currentJammer(team) {
