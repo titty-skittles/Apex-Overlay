@@ -22,6 +22,48 @@ function applyVisibilityBinds(binds) {
   }
 }
 
+let lastStatusLabel = "";
+let lastStatusWidth = 0;
+
+function updateStatusMarquee(force = false) {
+  const outer = document.querySelector(".gameStatusInner");
+  const text = document.querySelector(".gameStatusText");
+  if (!outer || !text) return;
+
+  const label = text.textContent ?? "";
+  const width = outer.clientWidth;
+
+  if (!force && label === lastStatusLabel && width === lastStatusWidth) {
+    return;
+  }
+
+  lastStatusLabel = label;
+  lastStatusWidth = width;
+
+  text.classList.remove("is-marquee");
+  text.style.removeProperty("--marquee-distance");
+  text.style.removeProperty("--marquee-duration");
+  text.style.transform = "";
+
+  const outerStyle = getComputedStyle(outer);
+  const padLeft = parseFloat(outerStyle.paddingLeft) || 0;
+  const padRight = parseFloat(outerStyle.paddingRight) || 0;
+  const visibleWidth = outer.clientWidth - padLeft - padRight;
+
+  const overflow = Math.ceil(text.scrollWidth - visibleWidth);
+
+  if (overflow > 0) {
+    const pxPerSecond = 36;
+    const duration = Math.max(8, (overflow / pxPerSecond) * 2 + 2);
+
+    text.style.setProperty("--marquee-distance", `${overflow}px`);
+    text.style.setProperty("--marquee-duration", `${duration}s`);
+
+    void text.offsetWidth; // restart cleanly
+    text.classList.add("is-marquee");
+  }
+}
+
 
 function render() {
   if (!model) return;
@@ -39,6 +81,7 @@ function render() {
   const isPregame = String(m.statusLabel ?? "").trim() === "Time to Derby";
   const isIntermission = m.intermission?.running === true;
   const isComingUp = (m.statusLabel ?? "").trim() === "Coming Up";
+  const prevStatus = lastStatusLabel;
 
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
@@ -125,6 +168,10 @@ function render() {
   
   // --- Visibility
   // If SSE model doesn't include ui yet, fall back to label-based jam detection:
+
+  if ((m.statusLabel ?? "") !== prevStatus) {
+    updateStatusMarquee(true);
+  }
 
 
   document.querySelector(".gameStatusStrip .jamNum")

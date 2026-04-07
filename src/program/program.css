@@ -194,30 +194,50 @@ body.program .overlay-safe{
 
 /* --- Game Status Strip --- */
 .gameStatusStrip{
-  grid-column:1;
-  grid-row:2;
+  grid-column: 1;
+  grid-row: 2;
   font-size: .7em;
 
   display: flex;
-  align-items: center;      /* 🔑 vertical centering */
+  align-items: center;
   justify-content: center;
 
   text-align: center;
-  background:#d40000;
-  color:#fff;
-  font-family:"Bebas Kai";
+  background: #d40000;
+  color: #fff;
+  font-family: "Bebas Kai";
   clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%);
 }
-.gameStatusText{
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0 1em;
 
-  white-space: nowrap;
+.gameStatusInner{
+  display: flex;
+  width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-
+  padding: 0 1.4em;
   text-align: center;
+}
+
+.gameStatusText{
+  display: block;
+  white-space: nowrap;
+  will-change: transform;
+  width: max-content;
+}
+
+.gameStatusText.is-marquee{
+  animation: statusMarqueePingPong var(--marquee-duration, 8s) ease-in-out infinite;
+}
+
+@keyframes statusMarqueePingPong {
+  0%, 20% {
+    transform: translateX(0);
+  }
+  45%, 70% {
+    transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 /* --- JAMMER ROWS --- */
