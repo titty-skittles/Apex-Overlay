@@ -121,7 +121,7 @@ body.program .overlay-safe{
 .teamHead{
   grid-row:1;
   display:grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   font-family: "Bebas Kai";
   position: relative;
 }
@@ -133,10 +133,23 @@ body.program .overlay-safe{
 }
 
 .teamHead .teamName{
-  padding: .15rem .6rem;
+  padding: .15rem 0.6rem;
+  min-width: 0;
+  padding-right: 1.4rem;
+
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+.teamHead .teamNameText{
+  display: block;
+  min-width: 0;
+  width: 100%;
+
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 .teamHead .teamScore{
@@ -194,6 +207,17 @@ body.program .overlay-safe{
   color:#fff;
   font-family:"Bebas Kai";
   clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%);
+}
+.gameStatusText{
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 1em;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  text-align: center;
 }
 
 /* --- JAMMER ROWS --- */
