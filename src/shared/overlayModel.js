@@ -107,9 +107,10 @@ function timeoutOwnerToTeamIndex(ownerRaw) {
   return null; // "O" or unknown
 }
 
-function jamStatusLabel({ starPass, lead, lost }) {
+function jamStatusLabel({ starPass, lead, lost, calloff }) {
   if (starPass) return "STAR PASS";
   if (lost) return "LOST";
+  if (calloff) return "CALLED";
   if (lead) return "LEAD";
   return "";
 }
@@ -152,6 +153,7 @@ export function buildOverlayModel(get, settings = {}) {
       const lead = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lead`));
       const lost = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lost`));
       const starPass = bool(get(`ScoreBoard.CurrentGame.Team(${t}).StarPass`));
+      const calloff = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Calloff`));
 
       const timeouts = n(get(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0);
       const officialReviews = n(get(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0);
@@ -209,8 +211,8 @@ export function buildOverlayModel(get, settings = {}) {
 
         onTrack: POSITIONS.map((pos) => readPosition(get, t, pos)),
 
-        jamStatus: { lead, lost, starPass },
-        jamStatusLabel: jamStatusLabel({ lead, lost, starPass }),
+        jamStatus: { lead, lost, starPass, calloff },
+        jamStatusLabel: jamStatusLabel({ lead, lost, starPass, calloff }),
 
         timeouts,
         officialReviews,
