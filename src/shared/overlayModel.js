@@ -299,10 +299,22 @@ export function buildOverlayModel(get, settings = {}) {
     //if (Number(m.period?.number) === 0) return "Time to Derby";
     if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
 
+    // --- End of game / score states
+    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
+    // Period 2 not running is the “game ended” signal in your feed
+    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
+    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+    if (m.officialScore || isFinished) {
+      return "Official Score";
+    }
+    // If the game has ended but isn’t official yet, show Unofficial Score
+    if (gameEnded) {
+      return "Unofficial Score";
+    }
 
     if (inIntermission) return "Intermission";
 
-    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+
 
     const lineupName = String(m.lineup?.name ?? "").trim();
     if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
@@ -342,17 +354,6 @@ export function buildOverlayModel(get, settings = {}) {
       return n ? `Jam ${n}` : "Jam";
     }
 
-    // --- End of game / score states
-    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
-    // Period 2 not running is the “game ended” signal in your feed
-    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
-    if (m.officialScore || isFinished) {
-      return "Official Score";
-    }
-    // If the game has ended but isn’t official yet, show Unofficial Score
-    if (gameEnded) {
-      return "Unofficial Score";
-    }
 
           // fallback
     return m.mainClock?.label ?? "Live";
