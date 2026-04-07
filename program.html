@@ -76,13 +76,17 @@
             </section>
 
             <!-- TEAM 2 JAMMER LINE (bottom-right) -->
-            <section class="jammerRow">
+            <section class="team2 jammerRow">
               <div class="jammerName">
                 <span class="jammingNum" data-bind="t2.jamming.number"></span>
-                <span class="jammerSkater" data-bind="t2.jamming.name"></span>
+                <span class="jammingSkater" data-bind="t2.jamming.name"></span>
               </div>
-              <div class="jamDelta">+<span data-bind="t2.jamScore"></span></div>
-              <div class="jammerStatus" ></div>
+                          
+              <div class="jamRight">
+                <div class="jamDelta">+<span data-bind="t2.jamScore"></span></div>
+                <div class="teamJamStatus" data-bind="t2.jam.status"></div>
+              </div>
+
             </section>
           </div>
 

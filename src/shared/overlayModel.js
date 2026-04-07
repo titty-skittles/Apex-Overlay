@@ -284,14 +284,19 @@ export function buildOverlayModel(get, settings = {}) {
     }
 
     if (m.timeout?.running) {
-      if (m.teams?.[0]?.inOfficialReview) return `Official Review - ${m.teams?.[0]?.name ?? "Team 1"}`;
-      if (m.teams?.[1]?.inOfficialReview) return `Official Review - ${m.teams?.[1]?.name ?? "Team 2"}`;
+      if (m.teams?.[0]?.inOfficialReview) {
+        return `Official Review - ${m.teams?.[0]?.initials || m.teams?.[0]?.name || "Team 1"}`;
+      }
+      if (m.teams?.[1]?.inOfficialReview) {
+        return `Official Review - ${m.teams?.[1]?.initials || m.teams?.[1]?.name || "Team 2"}`;
+      }
       if (m.officialReview) return "Official Review";
 
       const ownerRaw = String(m.timeoutOwner ?? "").trim();
       const teamIdx = timeoutOwnerToTeamIndex(ownerRaw);
       if (teamIdx != null) {
-        const teamName = m.teams?.[teamIdx]?.name ?? `Team ${teamIdx + 1}`;
+        const team = m.teams?.[teamIdx];
+        const teamName = team?.initials || team?.name || `Team ${teamIdx + 1}`;
         return `Timeout - ${teamName}`;
       }
 

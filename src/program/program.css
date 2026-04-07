@@ -283,14 +283,14 @@ body.program .overlay-safe{
 
 .teamJamStatus:empty{ display: none; }
 
-.team1 .teamJamStatus {
-  color: var(--team-one-secondary);
-  background-color: royalblue;
+.team2 .teamJamStatus {
+  color: var(--t2-primary-text);
+  background-color: var(--t2-primary-bg);
 }
 
-.team-two .teamJamStatus {
-  color: var(--team-two-secondary);
-  background-color: var(--team-two-primary);
+.team1 .teamJamStatus {
+  color: var(--t1-primary-text);
+  background-color: var(--t1-primary-bg);
 }
 
 
