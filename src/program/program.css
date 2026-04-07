@@ -214,7 +214,11 @@ body.program .overlay-safe{
   width: 100%;
   overflow: hidden;
   padding: 0 1.4em;
-  text-align: center;
+  justify-content: center;
+}
+
+.gameStatusInner.is-marquee{
+  justify-content: flex-start;
 }
 
 .gameStatusText{

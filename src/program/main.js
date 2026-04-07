@@ -41,6 +41,7 @@ function updateStatusMarquee(force = false) {
   lastStatusWidth = width;
 
   text.classList.remove("is-marquee");
+  outer.classList.remove("is-marquee");
   text.style.removeProperty("--marquee-distance");
   text.style.removeProperty("--marquee-duration");
   text.style.transform = "";
@@ -54,13 +55,14 @@ function updateStatusMarquee(force = false) {
 
   if (overflow > 0) {
     const pxPerSecond = 36;
-    const duration = Math.max(8, (overflow / pxPerSecond) * 2 + 2);
+    const duration = Math.max(9, (overflow / pxPerSecond) * 2 + 2);
 
     text.style.setProperty("--marquee-distance", `${overflow}px`);
     text.style.setProperty("--marquee-duration", `${duration}s`);
 
     void text.offsetWidth; // restart cleanly
     text.classList.add("is-marquee");
+    outer.classList.add("is-marquee");
   }
 }
 
