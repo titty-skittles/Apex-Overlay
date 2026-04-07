@@ -37,9 +37,13 @@ function render() {
   const t2Jamming = getJammingSkater(t2);
 
   const isPregame = String(m.statusLabel ?? "").trim() === "Time to Derby";
+  const isIntermission = m.intermission?.running === true;
 
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
+
+  const label = String(m.statusLabel ?? "").trim();
+  const showJam = (m.ui?.showJamNum ?? /^Jam\b/i.test(String(m.statusLabel ?? "").trim()));
 
   //console.log("[program bg model]", m.background);
 
@@ -51,10 +55,14 @@ function render() {
     ?.classList.toggle("is-hidden", !showJam);
 
   document.querySelector(".periodBadge")
-    ?.classList.toggle("is-hidden", isPregame);
+    ?.classList.toggle("is-hidden", isPregame || isIntermission );
 
   document.querySelector(".secondaryTime")
-    ?.classList.toggle("is-hidden", isPregame);
+    ?.classList.toggle("is-hidden", isPregame ||  isIntermission );
+  
+  document.querySelectorAll(".jammerRow").forEach((el) => {
+    el.classList.toggle("is-hidden", isPregame || isIntermission );
+  });
 
   applyTextBinds({
     "period.number": pNum,
@@ -116,8 +124,7 @@ function render() {
   
   // --- Visibility
   // If SSE model doesn't include ui yet, fall back to label-based jam detection:
-  const label = String(m.statusLabel ?? "").trim();
-  const showJam = (m.ui?.showJamNum ?? /^Jam\b/i.test(String(m.statusLabel ?? "").trim()));
+
 
   document.querySelector(".gameStatusStrip .jamNum")
     ?.classList.toggle("is-hidden", !showJam);
