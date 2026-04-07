@@ -368,8 +368,10 @@ export function buildOverlayModel(get, settings = {}) {
     if (isLineup) {
       const prevJam = pickPrevJamNumber(get, periodNum, jamNum, teamNum);
 
+      const prevPos = team?.jamStatus?.starPass ? "Pivot" : "Jammer";
+
       // Use previous jam fielding for jammer identity
-      const prev = readPrevJamFielding(get, { periodNum, jamNum: prevJam, teamNum, pos: "Jammer" });
+      const prev = readPrevJamFielding(get, { periodNum, jamNum: prevJam, teamNum, pos: prevPos });
 
       jammer = { name: prev.name, number: prev.number };
 
