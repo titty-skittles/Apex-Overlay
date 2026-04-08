@@ -96,10 +96,6 @@ function timeoutOwnerToTeamIndex(ownerRaw) {
   const owner = String(ownerRaw ?? "").trim().toUpperCase();
   if (!owner) return null;
 
-  // old format
-  if (owner === "1") return 0;
-  if (owner === "2") return 1;
-
   // v5+ format: "<gameId>_1" / "<gameId>_2"
   if (owner.endsWith("_1")) return 0;
   if (owner.endsWith("_2")) return 1;
@@ -141,6 +137,7 @@ export function buildOverlayModel(get, settings = {}) {
     lineup: readClock(get, "Lineup"),
     timeout: readClock(get, "Timeout"),
     intermission: readClock(get, "Intermission"),
+    overtime: bool(get("ScoreBoard.CurrentGame.InOvertime")),
     timeoutOwner: s(get("ScoreBoard.CurrentGame.TimeoutOwner"), ""),
     officialReview: bool(get("ScoreBoard.CurrentGame.OfficialReview")),
     officialScore: bool(get("ScoreBoard.CurrentGame.OfficialScore")),
@@ -272,51 +269,63 @@ export function buildOverlayModel(get, settings = {}) {
   // --- Jammer row display bundle (prevents "next jammer + previous jamScore/status")
 
   model.statusLabel = computeStatusLabel(model);
-  // console.log("[phase]", {
-  //   label: model.statusLabel,
-  //   timeoutRunning: model.timeout?.running,
-  //   lineupRunning: model.lineup?.running,
-  //   lineupName: model.lineup?.name,
-  //   timeoutOwner: model.timeoutOwner,
-  //   officialReview: model.officialReview,
-  // });
-  
+
   model.display = model.display || {};
   model.display.jammerRow = {};
 
 
   function computeStatusLabel(m) {
-    // console.log("[computeStatusLabel] called", {
-    //   intermission: !!m.intermission?.running,
-    //   secondaryMode: m.secondaryClock?.mode,
-    //   secondaryLabel: m.secondaryClock?.label,
-    //   timeoutRunning: !!m.timeout?.running,
-    //   officialReview: m.officialReview,
-    // });
+
     const periodNum = Number(m.period?.number ?? 0);
     const jamNum = Number(m.jam?.number ?? 0);
     const inIntermission = !!m.intermission?.running;
-    //if (Number(m.period?.number) === 0) return "Time to Derby";
-    if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
 
     // --- End of game / score states
     const isFinished = String(m.state ?? "").toLowerCase() === "finished";
     // Period 2 not running is the “game ended” signal in your feed
     const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
-    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
-    if (m.officialScore || isFinished) {
+    const lineupName = String(m.lineup?.name ?? "").trim();
+
+
+/*     console.log("status debug", {
+      periodNum,
+      jamNum,
+      overtime: m.overtime,
+      officialScore: m.officialScore,
+      isFinished,
+      gameEnded,
+      inIntermission,
+      jamRunning: m.jam?.running,
+      timeoutRunning: m.timeout?.running,
+      state: m.state,
+    }); */
+
+    //if (Number(m.period?.number) === 0) return "Time to Derby";
+    if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
+
+
+    if (m.overtime) {
+      if (m.jam?.running) {
+        return `Overtime - Jam ${jamNum}`;
+      }
+      if (!m.jam?.running && m.timeout?.running) {
+        return "Overtime - Timeout";
+      }
+      if (!m.jam?.running) {
+        return "Overtime -  Lineup"
+      }
+      return "Overtime";
+    }
+
+    if (m.officialScore) {
       return "Official Score";
     }
     // If the game has ended but isn’t official yet, show Unofficial Score
-    if (gameEnded) {
+    if (isFinished || (gameEnded && !m.timeout?.running)) {
       return "Unofficial Score";
     }
 
-    if (inIntermission) return "Intermission";
 
-
-
-    const lineupName = String(m.lineup?.name ?? "").trim();
     if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
       return "Post Timeout";
     }
@@ -342,6 +351,11 @@ export function buildOverlayModel(get, settings = {}) {
       if (owner === "O") return "Official Timeout";
       return "Timeout";
     }
+
+    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+
+    if (inIntermission) return "Intermission";
+
 
     if (m.lineup?.running) {
       const nm = String(m.lineup?.name ?? "").trim();
