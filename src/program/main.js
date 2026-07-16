@@ -33,6 +33,17 @@ function updateStatusMarquee(force = false) {
   const label = text.textContent ?? "";
   const width = outer.clientWidth;
 
+  const style = getComputedStyle(outer);
+
+  const availableWidth =
+    outer.clientWidth -
+    (parseFloat(style.paddingLeft) || 0) -
+    (parseFloat(style.paddingRight) || 0);
+
+  const textWidth = text.getBoundingClientRect().width;
+
+  const overflow = Math.ceil(textWidth - availableWidth);
+
   if (!force && label === lastStatusLabel && width === lastStatusWidth) {
     return;
   }
@@ -51,7 +62,7 @@ function updateStatusMarquee(force = false) {
   const padRight = parseFloat(outerStyle.paddingRight) || 0;
   const visibleWidth = outer.clientWidth - padLeft - padRight;
 
-  const overflow = Math.ceil(text.scrollWidth - visibleWidth);
+  //const overflow = Math.ceil(text.scrollWidth - visibleWidth);
 
   if (overflow > 0) {
     const pxPerSecond = 36;
@@ -66,6 +77,22 @@ function updateStatusMarquee(force = false) {
   }
 }
 
+const statusInner = document.querySelector(".gameStatusInner");
+
+if (statusInner && "ResizeObserver" in window) {
+  const statusResizeObserver = new ResizeObserver(() => {
+    requestAnimationFrame(() => {
+      updateStatusMarquee();
+    });
+  });
+  statusResizeObserver.observe(statusInner);
+}
+
+document.fonts?.ready.then(() => {
+  requestAnimationFrame(() => {
+    updateStatusMarquee(true);
+  });
+});
 
 function render() {
   if (!model) return;
@@ -83,7 +110,7 @@ function render() {
   const isPregame = String(m.statusLabel ?? "").trim() === "Time to Derby";
   const isIntermission = m.intermission?.running === true;
   const isComingUp = (m.statusLabel ?? "").trim() === "Coming Up";
-  const prevStatus = lastStatusLabel;
+  //const prevStatus = lastStatusLabel;
 
   const jr1 = m.display?.jammerRow?.t1 ?? {};
   const jr2 = m.display?.jammerRow?.t2 ?? {};
@@ -146,6 +173,9 @@ function render() {
     "t2.jamming.name": jr2.jammer?.name ?? "",
   });
 
+  updateStatusMarquee();
+
+
   applyClassBinds({
     "t1.timeout.1": t1.timeoutDots?.[0] ?? "Dot",
     "t1.timeout.2": t1.timeoutDots?.[1] ?? "Dot",
@@ -171,10 +201,10 @@ function render() {
   // --- Visibility
   // If SSE model doesn't include ui yet, fall back to label-based jam detection:
 
-  if ((m.statusLabel ?? "") !== prevStatus) {
+/*   if ((m.statusLabel ?? "") !== prevStatus) {
     updateStatusMarquee(true);
   }
-
+ */
 
   document.querySelector(".gameStatusStrip .jamNum")
     ?.classList.toggle("is-hidden", !showJam);

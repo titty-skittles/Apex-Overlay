@@ -189,7 +189,7 @@ body.program .overlay-safe{
   clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%);
 
 
-    /* 🔑 overlap to hide the seam */
+    /* overlap to hide the seam */
   margin-left: -0.8em;
   z-index: 2;
   position: relative;
@@ -222,8 +222,17 @@ body.program .overlay-safe{
 }
 
 /* --- Game Status Strip --- */
+.clockCol,
+.gamestatusStrip,
+.gameStatusInner {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 .gameStatusStrip{
   font-size: .7em;
+  overflow: hidden;
 
   display: flex;
   align-items: center;
@@ -253,6 +262,7 @@ body.program .overlay-safe{
   white-space: nowrap;
   will-change: transform;
   width: max-content;
+  flex: 0 0 max-content;
 }
 
 .gameStatusText.is-marquee{

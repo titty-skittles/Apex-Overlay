@@ -111,11 +111,23 @@ function jamStatusLabel({ starPass, lead, lost, calloff }) {
   return "";
 }
 
+let trackedJamKey = "";
+const hadLeadThisJam = [false, false];
 
 export function buildOverlayModel(get, settings = {}) {
 
   const backgroundMode = settings?.background?.mode || "green";
   const backgroundCustom = settings?.background?.color || "#00ff00";
+
+  const currentPeriodNum = n(get("ScoreBoard.CurrentGame.Period.Number"), 0);
+  const currentJamNum = n(get("ScoreBoard.CurrentGame.Jam.Number"), 0);
+  const jamKey = `${currentPeriodNum}:${currentJamNum}`;
+
+  if (jamKey !== trackedJamKey) {
+    trackedJamKey = jamKey;
+    hadLeadThisJam[0] = false;
+    hadLeadThisJam[1] = false;
+  }
 
   function resolveBackground(mode, custom) {
     switch (mode) {
@@ -151,6 +163,9 @@ export function buildOverlayModel(get, settings = {}) {
       const lost = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Lost`));
       const starPass = bool(get(`ScoreBoard.CurrentGame.Team(${t}).StarPass`));
       const calloff = bool(get(`ScoreBoard.CurrentGame.Team(${t}).Calloff`));
+
+      if (lead) { hadLeadThisJam[t - 1] = true; }
+      const lost = lostRaw && hadLeadThisJam[t - 1];
 
       const timeouts = n(get(`ScoreBoard.CurrentGame.Team(${t}).Timeouts`), 0);
       const officialReviews = n(get(`ScoreBoard.CurrentGame.Team(${t}).OfficialReviews`), 0);
@@ -254,7 +269,10 @@ export function buildOverlayModel(get, settings = {}) {
 
 
   // --- UI flags
-  const label = (model.statusLabel ?? "").trim();
+  model.statusLabel = computeStatusLabel(model);
+
+
+  //const label = (model.statusLabel ?? "").trim();
 
   const isJam = model.jam?.running === true;
   const isTimeout = model.timeout?.running === true;  
@@ -268,7 +286,6 @@ export function buildOverlayModel(get, settings = {}) {
 
   // --- Jammer row display bundle (prevents "next jammer + previous jamScore/status")
 
-  model.statusLabel = computeStatusLabel(model);
 
   model.display = model.display || {};
   model.display.jammerRow = {};
@@ -312,7 +329,7 @@ export function buildOverlayModel(get, settings = {}) {
         return "Overtime - Timeout";
       }
       if (!m.jam?.running) {
-        return "Overtime -  Lineup"
+        return "Overtime - Lineup"
       }
       return "Overtime";
     }
@@ -352,7 +369,7 @@ export function buildOverlayModel(get, settings = {}) {
       return "Timeout";
     }
 
-    if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+    //if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
 
     if (inIntermission) return "Intermission";
 
