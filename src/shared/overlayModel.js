@@ -291,104 +291,228 @@ export function buildOverlayModel(get, settings = {}) {
   model.display.jammerRow = {};
 
 
+//   function computeStatusLabel(m) {
+
+//     const periodNum = Number(m.period?.number ?? 0);
+//     const jamNum = Number(m.jam?.number ?? 0);
+//     const inIntermission = !!m.intermission?.running;
+
+//     // --- End of game / score states
+//     const isFinished = String(m.state ?? "").toLowerCase() === "finished";
+//     // Period 2 not running is the “game ended” signal in your feed
+//     const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
+//     const lineupName = String(m.lineup?.name ?? "").trim();
+
+
+// /*     console.log("status debug", {
+//       periodNum,
+//       jamNum,
+//       overtime: m.overtime,
+//       officialScore: m.officialScore,
+//       isFinished,
+//       gameEnded,
+//       inIntermission,
+//       jamRunning: m.jam?.running,
+//       timeoutRunning: m.timeout?.running,
+//       state: m.state,
+//     }); */
+
+//     //if (Number(m.period?.number) === 0) return "Time to Derby";
+//     if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
+
+
+//     if (m.overtime) {
+//       if (m.jam?.running) {
+//         return `Overtime - Jam ${jamNum}`;
+//       }
+//       if (!m.jam?.running && m.timeout?.running) {
+//         return "Overtime - Timeout";
+//       }
+//       if (!m.jam?.running) {
+//         return "Overtime - Lineup"
+//       }
+//       return "Overtime";
+//     }
+
+//     if (m.officialScore) {
+//       return "Official Score";
+//     }
+//     // If the game has ended but isn’t official yet, show Unofficial Score
+//     if (isFinished || (gameEnded && !m.timeout?.running)) {
+//       return "Unofficial Score";
+//     }
+
+
+//     if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
+//       return "Post Timeout";
+//     }
+
+//     if (m.timeout?.running) {
+//       if (m.teams?.[0]?.inOfficialReview) {
+//         return `Official Review - ${m.teams?.[0]?.initials || m.teams?.[0]?.name || "Team 1"}`;
+//       }
+//       if (m.teams?.[1]?.inOfficialReview) {
+//         return `Official Review - ${m.teams?.[1]?.initials || m.teams?.[1]?.name || "Team 2"}`;
+//       }
+//       if (m.officialReview) return "Official Review";
+
+//       const ownerRaw = String(m.timeoutOwner ?? "").trim();
+//       const teamIdx = timeoutOwnerToTeamIndex(ownerRaw);
+//       if (teamIdx != null) {
+//         const team = m.teams?.[teamIdx];
+//         const teamName = team?.initials || team?.name || `Team ${teamIdx + 1}`;
+//         return `Timeout - ${teamName}`;
+//       }
+
+//       const owner = ownerRaw.toUpperCase();
+//       if (owner === "O") return "Official Timeout";
+//       return "Timeout";
+//     }
+
+//     //if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+
+//     if (inIntermission) return "Intermission";
+
+
+//     if (m.lineup?.running) {
+//       const nm = String(m.lineup?.name ?? "").trim();
+//       return nm || "Lineup";
+//     }
+
+//     // 3) JAM when JAM CLOCK is running
+//     if (m.jam?.running) {
+//       const n = m.jam?.number;
+//       return n ? `Jam ${n}` : "Jam";
+//     }
+
+
+//           // fallback
+//     return m.mainClock?.label ?? "Live";
+//   }
+
+
+  // --- Status label computation - Recent update
   function computeStatusLabel(m) {
+  const periodNum = Number(m.period?.number ?? 0);
+  const jamNum = Number(m.jam?.number ?? 0);
 
-    const periodNum = Number(m.period?.number ?? 0);
-    const jamNum = Number(m.jam?.number ?? 0);
-    const inIntermission = !!m.intermission?.running;
+  const inIntermission = m.intermission?.running === true;
+  const isFinished =
+    String(m.state ?? "").toLowerCase() === "finished";
 
-    // --- End of game / score states
-    const isFinished = String(m.state ?? "").toLowerCase() === "finished";
-    // Period 2 not running is the “game ended” signal in your feed
-    const gameEnded = (m.period?.number >= 2) && (m.period?.running === false);
-    const lineupName = String(m.lineup?.name ?? "").trim();
+  const gameEnded =
+    periodNum >= 2 &&
+    m.period?.running === false &&
+    !m.jam?.running;
 
+  const lineupName =
+    String(m.lineup?.name ?? "").trim();
 
-/*     console.log("status debug", {
-      periodNum,
-      jamNum,
-      overtime: m.overtime,
-      officialScore: m.officialScore,
-      isFinished,
-      gameEnded,
-      inIntermission,
-      jamRunning: m.jam?.running,
-      timeoutRunning: m.timeout?.running,
-      state: m.state,
-    }); */
+  if (m.officialScore) {
+    return "Official Score";
+  }
 
-    //if (Number(m.period?.number) === 0) return "Time to Derby";
-    if (inIntermission && Number(m.period?.number) === 0) return "Time to Derby";
+  if (inIntermission && periodNum === 0) {
+    return "Time to Derby";
+  }
 
+  if (
+    m.lineup?.running &&
+    /^post timeout$/i.test(lineupName)
+  ) {
+    return "Post Timeout";
+  }
 
-    if (m.overtime) {
-      if (m.jam?.running) {
-        return `Overtime - Jam ${jamNum}`;
-      }
-      if (!m.jam?.running && m.timeout?.running) {
-        return "Overtime - Timeout";
-      }
-      if (!m.jam?.running) {
-        return "Overtime - Lineup"
-      }
-      return "Overtime";
+  // Active timeout or official review
+  if (m.timeout?.running) {
+    if (m.teams?.[0]?.inOfficialReview) {
+      const team = m.teams[0];
+
+      return `Official Review - ${
+        team.initials ||
+        team.name ||
+        "Home"
+      }`;
     }
 
-    if (m.officialScore) {
-      return "Official Score";
-    }
-    // If the game has ended but isn’t official yet, show Unofficial Score
-    if (isFinished || (gameEnded && !m.timeout?.running)) {
-      return "Unofficial Score";
-    }
+    if (m.teams?.[1]?.inOfficialReview) {
+      const team = m.teams[1];
 
-
-    if (m.lineup?.running && /^post timeout$/i.test(lineupName)) {
-      return "Post Timeout";
+      return `Official Review - ${
+        team.initials ||
+        team.name ||
+        "Away"
+      }`;
     }
 
-    if (m.timeout?.running) {
-      if (m.teams?.[0]?.inOfficialReview) {
-        return `Official Review - ${m.teams?.[0]?.initials || m.teams?.[0]?.name || "Team 1"}`;
-      }
-      if (m.teams?.[1]?.inOfficialReview) {
-        return `Official Review - ${m.teams?.[1]?.initials || m.teams?.[1]?.name || "Team 2"}`;
-      }
-      if (m.officialReview) return "Official Review";
-
-      const ownerRaw = String(m.timeoutOwner ?? "").trim();
-      const teamIdx = timeoutOwnerToTeamIndex(ownerRaw);
-      if (teamIdx != null) {
-        const team = m.teams?.[teamIdx];
-        const teamName = team?.initials || team?.name || `Team ${teamIdx + 1}`;
-        return `Timeout - ${teamName}`;
-      }
-
-      const owner = ownerRaw.toUpperCase();
-      if (owner === "O") return "Official Timeout";
-      return "Timeout";
+    if (m.officialReview) {
+      return "Official Review";
     }
 
-    //if (periodNum === 2 && jamNum === 0 && !m.jam?.running) return "Coming Up";
+    const ownerRaw =
+      String(m.timeoutOwner ?? "").trim();
 
-    if (inIntermission) return "Intermission";
+    const teamIdx =
+      timeoutOwnerToTeamIndex(ownerRaw);
 
+    if (teamIdx != null) {
+      const team = m.teams?.[teamIdx];
+
+      const teamName =
+        team?.initials ||
+        team?.name ||
+        `Team ${teamIdx + 1}`;
+
+      return `Timeout - ${teamName}`;
+    }
+
+    if (ownerRaw.toUpperCase() === "O") {
+      return "Official Timeout";
+    }
+
+    return "Timeout";
+  }
+
+  // Overtime phase
+  if (m.overtime) {
+    if (m.jam?.running) {
+      return jamNum
+        ? `Overtime - Jam ${jamNum}`
+        : "Overtime - Jam";
+    }
 
     if (m.lineup?.running) {
-      const nm = String(m.lineup?.name ?? "").trim();
-      return nm || "Lineup";
+      return "Overtime - Lineup";
     }
 
-    // 3) JAM when JAM CLOCK is running
-    if (m.jam?.running) {
-      const n = m.jam?.number;
-      return n ? `Jam ${n}` : "Jam";
-    }
-
-
-          // fallback
-    return m.mainClock?.label ?? "Live";
+    return "Overtime";
   }
+
+  // A running jam wins over inferred end-of-game states
+  if (m.jam?.running) {
+    return jamNum
+      ? `Jam ${jamNum}`
+      : "Jam";
+  }
+
+  // End of period 2, unless overtime was activated
+  if (isFinished || gameEnded) {
+    return "Unofficial Score";
+  }
+
+  // Break after period 1
+  if (inIntermission && periodNum === 1) {
+    return "Intermission";
+  }
+
+  // Between ordinary jams
+  if (m.lineup?.running) {
+    return lineupName || "Lineup";
+  }
+
+  return m.mainClock?.label ?? "Live";
+}
+
 
   // helper to read current jammer from onTrack (respects star pass)
   function currentJammer(team) {
